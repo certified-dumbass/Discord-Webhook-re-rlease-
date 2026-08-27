@@ -579,21 +579,32 @@
     }
 
     function callPluginEndpoint(endpoint) {
-        var request = {
-            url: ApiClient.getUrl(
-                'Dreamstreaming/DiscordBot/' + endpoint
-            ),
-            type: 'POST'
-        };
+    var url = ApiClient.getUrl(
+        'Dreamstreaming/DiscordBot/' + endpoint
+    );
 
-        console.log(
-            'Dreamstreaming Discord Bot request:',
-            request.url
-        );
+    console.log(
+        'Dreamstreaming Discord Bot request:',
+        url
+    );
 
-        return ApiClient.fetch(request).then(parseResponse);
-    }
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Emby-Token': ApiClient.accessToken()
+        }
+    }).then(function (response) {
+        if (!response.ok) {
+            return response.text().then(function (text) {
+                throw new Error(
+                    'HTTP ' + response.status + ': ' + text
+                );
+            });
+        }
 
+        return parseResponse(response);
+    });
+}
     page.addEventListener('pageshow', function () {
         Dashboard.showLoadingMsg();
 
