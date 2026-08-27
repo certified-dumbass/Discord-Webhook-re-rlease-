@@ -26,6 +26,8 @@
 
   <ItemGroup>
 
+    <None Remove="Web\config.html" />
+
     <EmbeddedResource Include="Web\config.html">
       <LogicalName>Dreamstreaming.DiscordBot.Web.config.html</LogicalName>
     </EmbeddedResource>

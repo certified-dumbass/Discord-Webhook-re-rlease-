@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <title>Dreamstreaming Discord Bot</title>
@@ -8,464 +7,435 @@
 
 <body>
 
-    <div id="configPage"
-         data-role="page"
-         class="page type-interior pluginConfigurationPage"
-         data-require="emby-input,emby-button,emby-select,emby-checkbox">
+<div id="configPage"
+     data-role="page"
+     class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox">
 
-        <div data-role="content">
-            <div class="content-primary">
+    <div data-role="content">
+        <div class="content-primary">
 
-                <form id="configForm">
+            <form id="configForm">
 
-                    <!-- Jellyfin URL -->
-                    <div class="inputContainer">
+                <!-- Jellyfin URL -->
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused"
+                           for="jellyfinUrl">
+                        Jellyfin Server URL
+                    </label>
 
-                        <label class="inputLabel inputLabelUnfocused"
-                               for="jellyfinUrl">
-                            Jellyfin Server URL
+                    <input id="jellyfinUrl"
+                           name="jellyfinUrl"
+                           type="text"
+                           is="emby-input"
+                           placeholder="http://localhost:9000" />
+
+                    <div class="fieldDescription">
+                        The URL of your Jellyfin server.
+                    </div>
+                </div>
+
+
+                <!-- Jellyfin API Key -->
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused"
+                           for="jellyfinApiKey">
+                        Jellyfin API Key
+                    </label>
+
+                    <input id="jellyfinApiKey"
+                           name="jellyfinApiKey"
+                           type="password"
+                           is="emby-input"
+                           placeholder="Enter your Jellyfin API key" />
+
+                    <div class="fieldDescription">
+                        The API key used to access your Jellyfin server.
+                    </div>
+                </div>
+
+
+                <!-- Discord Webhook -->
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused"
+                           for="discordWebhook">
+                        Discord Webhook
+                    </label>
+
+                    <input id="discordWebhook"
+                           name="discordWebhook"
+                           type="password"
+                           is="emby-input"
+                           placeholder="https://discord.com/api/webhooks/..." />
+
+                    <div class="fieldDescription">
+                        The Discord webhook used for updates.
+                    </div>
+                </div>
+
+
+                <!-- Scan Interval -->
+                <div class="selectContainer">
+                    <label class="selectLabel"
+                           for="scanInterval">
+                        Scan Interval
+                    </label>
+
+                    <select id="scanInterval"
+                            name="scanInterval"
+                            is="emby-select"
+                            class="emby-select-withcolor emby-select">
+
+                        <option value="1">Every hour</option>
+                        <option value="2">Every 2 hours</option>
+                        <option value="4">Every 4 hours</option>
+                        <option value="6">Every 6 hours</option>
+                        <option value="12">Every 12 hours</option>
+                        <option value="24">Every 24 hours</option>
+                        <option value="168">Weekly</option>
+
+                    </select>
+
+                    <div class="fieldDescription">
+                        How often Jellyfin should be scanned for newly added content.
+                    </div>
+                </div>
+
+
+                <!-- Scan Day -->
+                <div id="scanDayContainer"
+                     class="selectContainer">
+
+                    <label class="selectLabel"
+                           for="scanDay">
+                        Scan Day
+                    </label>
+
+                    <select id="scanDay"
+                            name="scanDay"
+                            is="emby-select"
+                            class="emby-select-withcolor emby-select">
+
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+
+                    </select>
+
+                    <div class="fieldDescription">
+                        The day on which the weekly scan should run.
+                    </div>
+                </div>
+
+
+                <!-- Scan Time -->
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused"
+                           for="scanTime">
+                        Scan Time
+                    </label>
+
+                    <input id="scanTime"
+                           name="scanTime"
+                           type="time"
+                           is="emby-input"
+                           value="20:00" />
+
+                    <div class="fieldDescription">
+                        The time at which the scan should run.
+                    </div>
+                </div>
+
+
+                <!-- Content -->
+                <div style="margin-top: 2em;">
+
+                    <h2>Content to Scan</h2>
+
+                    <div class="fieldDescription"
+                         style="margin-bottom: 1em;">
+                        Choose which types of content should be included in the scan.
+                    </div>
+
+
+                    <!-- Movies -->
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+
+                            <input id="scanMovies"
+                                   name="scanMovies"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Movies</span>
+
                         </label>
 
-                        <input id="jellyfinUrl"
-                               name="jellyfinUrl"
-                               type="text"
-                               is="emby-input"
-                               placeholder="https://your-jellyfin-server.com" />
-
                         <div class="fieldDescription">
-                            The URL of your Jellyfin server.
+                            Scan for newly added movies.
                         </div>
-
                     </div>
 
 
-                    <!-- Jellyfin API Key -->
-                    <div class="inputContainer">
+                    <!-- Series -->
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
 
-                        <label class="inputLabel inputLabelUnfocused"
-                               for="jellyfinApiKey">
-                            Jellyfin API Key
+                            <input id="scanSeries"
+                                   name="scanSeries"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Series</span>
+
                         </label>
 
-                        <input id="jellyfinApiKey"
-                               name="jellyfinApiKey"
-                               type="password"
-                               is="emby-input"
-                               placeholder="Enter your Jellyfin API key" />
-
                         <div class="fieldDescription">
-                            The API key used to access your Jellyfin server.
+                            Scan for newly added TV series.
                         </div>
-
                     </div>
 
 
-                    <!-- Discord Webhook -->
-                    <div class="inputContainer">
+                    <!-- Series Seasons -->
+                    <div id="scanSeriesSeasonsContainer"
+                         class="checkboxContainer checkboxContainer-withDescription"
+                         style="margin-left: 2em;">
 
-                        <label class="inputLabel inputLabelUnfocused"
-                               for="discordWebhook">
-                            Discord Webhook
+                        <label class="emby-checkbox-label">
+
+                            <input id="scanSeriesSeasons"
+                                   name="scanSeriesSeasons"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Seasons</span>
+
                         </label>
 
-                        <input id="discordWebhook"
-                               name="discordWebhook"
-                               type="password"
-                               is="emby-input"
-                               placeholder="https://discord.com/api/webhooks/..." />
-
                         <div class="fieldDescription">
-                            The Discord webhook used for updates.
+                            Include newly added seasons from series.
                         </div>
-
                     </div>
 
 
-                    <!-- Scan interval -->
-                    <div class="selectContainer">
+                    <!-- Series Episodes -->
+                    <div id="scanSeriesEpisodesContainer"
+                         class="checkboxContainer checkboxContainer-withDescription"
+                         style="margin-left: 2em;">
 
-                        <label class="selectLabel"
-                               for="scanInterval">
-                            Scan Interval
+                        <label class="emby-checkbox-label">
+
+                            <input id="scanSeriesEpisodes"
+                                   name="scanSeriesEpisodes"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Episodes</span>
+
                         </label>
 
-                        <select id="scanInterval"
-                                name="scanInterval"
-                                is="emby-select"
-                                class="emby-select-withcolor emby-select">
-
-                            <option value="1">Every hour</option>
-                            <option value="2">Every 2 hours</option>
-                            <option value="4">Every 4 hours</option>
-                            <option value="6">Every 6 hours</option>
-                            <option value="12">Every 12 hours</option>
-                            <option value="24">Every 24 hours</option>
-                            <option value="168">Weekly</option>
-
-                        </select>
-
                         <div class="fieldDescription">
-                            How often Jellyfin should be scanned for newly added content.
+                            Include newly added episodes from series.
                         </div>
-
                     </div>
 
 
-                    <!-- Scan day -->
-                    <div id="scanDayContainer"
-                         class="selectContainer">
+                    <!-- Anime -->
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
 
-                        <label class="selectLabel"
-                               for="scanDay">
-                            Scan Day
+                            <input id="scanAnime"
+                                   name="scanAnime"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Anime</span>
+
                         </label>
 
-                        <select id="scanDay"
-                                name="scanDay"
-                                is="emby-select"
-                                class="emby-select-withcolor emby-select">
-
-                            <option value="1">Monday</option>
-                            <option value="2">Tuesday</option>
-                            <option value="3">Wednesday</option>
-                            <option value="4">Thursday</option>
-                            <option value="5">Friday</option>
-                            <option value="6">Saturday</option>
-                            <option value="0">Sunday</option>
-
-                        </select>
-
                         <div class="fieldDescription">
-                            The day on which the weekly scan should run.
+                            Scan for anime series.
                         </div>
-
                     </div>
 
 
-                    <!-- Scan time -->
-                    <div class="inputContainer">
+                    <!-- Anime Seasons -->
+                    <div id="scanAnimeSeasonsContainer"
+                         class="checkboxContainer checkboxContainer-withDescription"
+                         style="margin-left: 2em;">
 
-                        <label class="inputLabel inputLabelUnfocused"
-                               for="scanTime">
-                            Scan Time
+                        <label class="emby-checkbox-label">
+
+                            <input id="scanAnimeSeasons"
+                                   name="scanAnimeSeasons"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Seasons</span>
+
                         </label>
 
-                        <input id="scanTime"
-                               name="scanTime"
-                               type="time"
-                               is="emby-input"
-                               value="20:00" />
+                        <div class="fieldDescription">
+                            Include newly added anime seasons.
+                        </div>
+                    </div>
+
+
+                    <!-- Anime Episodes -->
+                    <div id="scanAnimeEpisodesContainer"
+                         class="checkboxContainer checkboxContainer-withDescription"
+                         style="margin-left: 2em;">
+
+                        <label class="emby-checkbox-label">
+
+                            <input id="scanAnimeEpisodes"
+                                   name="scanAnimeEpisodes"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
+
+                            <span>Episodes</span>
+
+                        </label>
 
                         <div class="fieldDescription">
-                            The time at which the scan should run.
+                            Include newly added anime episodes.
                         </div>
-
                     </div>
 
 
-                    <!-- Content selection -->
-                    <div style="margin-top: 2em;">
+                    <!-- Anime Movies -->
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
 
-                        <h2>Content to Scan</h2>
+                            <input id="scanAnimeMovies"
+                                   name="scanAnimeMovies"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
 
-                        <div class="fieldDescription"
-                             style="margin-bottom: 1em;">
-                            Choose which types of content should be included
-                            in the scan.
-                        </div>
+                            <span>Anime Movies</span>
 
-
-                        <!-- Movies -->
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanMovies"
-                                       name="scanMovies"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Movies</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Scan for newly added movies.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Series -->
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanSeries"
-                                       name="scanSeries"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Series</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Scan for newly added TV series.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Series Seasons -->
-                        <div id="scanSeriesSeasonsContainer"
-                             class="checkboxContainer checkboxContainer-withDescription"
-                             style="margin-left: 2em;">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanSeriesSeasons"
-                                       name="scanSeriesSeasons"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Seasons</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Include newly added seasons from series.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Series Episodes -->
-                        <div id="scanSeriesEpisodesContainer"
-                             class="checkboxContainer checkboxContainer-withDescription"
-                             style="margin-left: 2em;">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanSeriesEpisodes"
-                                       name="scanSeriesEpisodes"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Episodes</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Include newly added episodes from series.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Anime -->
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanAnime"
-                                       name="scanAnime"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Anime</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Scan for anime series.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Anime Seasons -->
-                        <div id="scanAnimeSeasonsContainer"
-                             class="checkboxContainer checkboxContainer-withDescription"
-                             style="margin-left: 2em;">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanAnimeSeasons"
-                                       name="scanAnimeSeasons"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Seasons</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Include newly added anime seasons.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Anime Episodes -->
-                        <div id="scanAnimeEpisodesContainer"
-                             class="checkboxContainer checkboxContainer-withDescription"
-                             style="margin-left: 2em;">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanAnimeEpisodes"
-                                       name="scanAnimeEpisodes"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Episodes</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Include newly added anime episodes.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Anime Movies -->
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanAnimeMovies"
-                                       name="scanAnimeMovies"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Anime Movies</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Scan for newly added anime movies.
-                            </div>
-
-                        </div>
-
-
-                        <!-- Collections -->
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-
-                            <label class="emby-checkbox-label">
-
-                                <input id="scanCollections"
-                                       name="scanCollections"
-                                       type="checkbox"
-                                       is="emby-checkbox" />
-
-                                <span>Collections</span>
-
-                            </label>
-
-                            <div class="fieldDescription">
-                                Scan for newly added collections.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Save -->
-                    <div style="margin-top: 2em;">
-
-                        <button is="emby-button"
-                                type="submit"
-                                class="raised button-submit block emby-button">
-
-                            <span>Save Settings</span>
-
-                        </button>
-
-                    </div>
-
-
-                    <!-- Test Discord -->
-                    <div style="margin-top: 1em;">
-
-                        <button id="testDiscordButton"
-                                is="emby-button"
-                                type="button"
-                                class="raised block emby-button">
-
-                            <span>Test Discord Webhook</span>
-
-                        </button>
+                        </label>
 
                         <div class="fieldDescription">
-                            Sends a test message using the currently configured Discord webhook.
+                            Scan for newly added anime movies.
                         </div>
-
                     </div>
 
 
-                    <!-- Run Scan -->
-                    <div style="margin-top: 1em;">
+                    <!-- Collections -->
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
 
-                        <button id="runScanButton"
-                                is="emby-button"
-                                type="button"
-                                class="raised block emby-button">
+                            <input id="scanCollections"
+                                   name="scanCollections"
+                                   type="checkbox"
+                                   is="emby-checkbox" />
 
-                            <span>Run Scan Now</span>
+                            <span>Collections</span>
 
-                        </button>
+                        </label>
 
                         <div class="fieldDescription">
-                            Save your settings first. The first scan creates a baseline.
-                            Later scans announce newly added movies and series.
+                            Scan for newly added collections.
                         </div>
-
                     </div>
 
-                </form>
+                </div>
 
-            </div>
+
+                <!-- Save -->
+                <div style="margin-top: 2em;">
+                    <button is="emby-button"
+                            type="submit"
+                            class="raised button-submit block emby-button">
+
+                        <span>Save Settings</span>
+
+                    </button>
+                </div>
+
+
+                <!-- Test Discord -->
+                <div style="margin-top: 1em;">
+                    <button id="testDiscordButton"
+                            is="emby-button"
+                            type="button"
+                            class="raised block emby-button">
+
+                        <span>Test Discord Webhook</span>
+
+                    </button>
+
+                    <div class="fieldDescription">
+                        Sends a test message using the configured Discord webhook.
+                    </div>
+                </div>
+
+
+                <!-- Run Scan -->
+                <div style="margin-top: 1em;">
+                    <button id="runScanButton"
+                            is="emby-button"
+                            type="button"
+                            class="raised block emby-button">
+
+                        <span>Run Scan Now</span>
+
+                    </button>
+
+                    <div class="fieldDescription">
+                        Save your settings first. The first scan creates a baseline.
+                        Later scans announce newly added content.
+                    </div>
+                </div>
+
+            </form>
         </div>
+    </div>
 
 
-        <!--
-            IMPORTANT:
-            Script intentionally stays INSIDE #configPage.
-            This follows the official Jellyfin plugin template structure.
-        -->
-        <script type="text/javascript">
+    <!-- Keep script INSIDE the Jellyfin page -->
+    <script type="text/javascript">
 
-            var DreamstreamingDiscordBotConfig = {
+        (function () {
+            'use strict';
 
-                pluginUniqueId:
-                    '7B7E6E2A-5F2B-4A3D-9F64-9D0E3C6D8A21'
+            var pluginId =
+                '7B7E6E2A-5F2B-4A3D-9F64-9D0E3C6D8A21';
 
-            };
+            var page =
+                document.querySelector('#configPage');
+
+            var form =
+                document.querySelector('#configForm');
+
+            var testButton =
+                document.querySelector('#testDiscordButton');
+
+            var runScanButton =
+                document.querySelector('#runScanButton');
 
 
             /*
-             * Visibility helpers
+             * Visibility
              */
 
             function updateScanDayVisibility() {
 
-                var interval =
-                    parseInt(
-                        document.querySelector('#scanInterval').value,
-                        10
-                    );
+                var interval = parseInt(
+                    document.querySelector('#scanInterval').value,
+                    10
+                );
 
                 document
                     .querySelector('#scanDayContainer')
                     .style
                     .display =
-                        interval === 168
-                            ? ''
-                            : 'none';
+                        interval === 168 ? '' : 'none';
             }
 
 
@@ -474,23 +444,17 @@
                 var enabled =
                     document.querySelector('#scanSeries').checked;
 
-
                 document
                     .querySelector('#scanSeriesSeasonsContainer')
                     .style
                     .display =
-                        enabled
-                            ? ''
-                            : 'none';
-
+                        enabled ? '' : 'none';
 
                 document
                     .querySelector('#scanSeriesEpisodesContainer')
                     .style
                     .display =
-                        enabled
-                            ? ''
-                            : 'none';
+                        enabled ? '' : 'none';
             }
 
 
@@ -499,28 +463,22 @@
                 var enabled =
                     document.querySelector('#scanAnime').checked;
 
-
                 document
                     .querySelector('#scanAnimeSeasonsContainer')
                     .style
                     .display =
-                        enabled
-                            ? ''
-                            : 'none';
-
+                        enabled ? '' : 'none';
 
                 document
                     .querySelector('#scanAnimeEpisodesContainer')
                     .style
                     .display =
-                        enabled
-                            ? ''
-                            : 'none';
+                        enabled ? '' : 'none';
             }
 
 
             /*
-             * Apply saved configuration
+             * Load config into UI
              */
 
             function applyConfiguration(config) {
@@ -528,82 +486,67 @@
                 document.querySelector('#jellyfinUrl').value =
                     config.JellyfinUrl || '';
 
-
                 document.querySelector('#jellyfinApiKey').value =
                     config.JellyfinApiKey || '';
-
 
                 document.querySelector('#discordWebhook').value =
                     config.DiscordWebhook || '';
 
-
                 document.querySelector('#scanInterval').value =
                     config.ScanIntervalHours || 168;
-
 
                 document.querySelector('#scanDay').value =
                     config.ScanDay !== undefined
                         ? config.ScanDay
                         : 0;
 
-
                 document.querySelector('#scanTime').value =
                     config.ScanTime || '20:00';
-
 
                 document.querySelector('#scanMovies').checked =
                     config.ScanMovies !== undefined
                         ? config.ScanMovies
                         : true;
 
-
                 document.querySelector('#scanSeries').checked =
                     config.ScanSeries !== undefined
                         ? config.ScanSeries
                         : true;
-
 
                 document.querySelector('#scanSeriesSeasons').checked =
                     config.ScanSeriesSeasons !== undefined
                         ? config.ScanSeriesSeasons
                         : true;
 
-
                 document.querySelector('#scanSeriesEpisodes').checked =
                     config.ScanSeriesEpisodes !== undefined
                         ? config.ScanSeriesEpisodes
                         : true;
-
 
                 document.querySelector('#scanAnime').checked =
                     config.ScanAnime !== undefined
                         ? config.ScanAnime
                         : true;
 
-
                 document.querySelector('#scanAnimeSeasons').checked =
                     config.ScanAnimeSeasons !== undefined
                         ? config.ScanAnimeSeasons
                         : true;
-
 
                 document.querySelector('#scanAnimeEpisodes').checked =
                     config.ScanAnimeEpisodes !== undefined
                         ? config.ScanAnimeEpisodes
                         : true;
 
-
                 document.querySelector('#scanAnimeMovies').checked =
                     config.ScanAnimeMovies !== undefined
                         ? config.ScanAnimeMovies
                         : true;
 
-
                 document.querySelector('#scanCollections').checked =
                     config.ScanCollections !== undefined
                         ? config.ScanCollections
                         : true;
-
 
                 updateScanDayVisibility();
                 updateSeriesVisibility();
@@ -612,31 +555,19 @@
 
 
             /*
-             * Copy UI values into configuration
+             * UI -> config
              */
 
             function collectConfiguration(config) {
 
                 config.JellyfinUrl =
-                    document
-                        .querySelector('#jellyfinUrl')
-                        .value
-                        .trim();
-
+                    document.querySelector('#jellyfinUrl').value.trim();
 
                 config.JellyfinApiKey =
-                    document
-                        .querySelector('#jellyfinApiKey')
-                        .value
-                        .trim();
-
+                    document.querySelector('#jellyfinApiKey').value.trim();
 
                 config.DiscordWebhook =
-                    document
-                        .querySelector('#discordWebhook')
-                        .value
-                        .trim();
-
+                    document.querySelector('#discordWebhook').value.trim();
 
                 config.ScanIntervalHours =
                     parseInt(
@@ -644,85 +575,71 @@
                         10
                     );
 
-
                 config.ScanDay =
                     parseInt(
                         document.querySelector('#scanDay').value,
                         10
                     );
 
-
                 config.ScanTime =
                     document.querySelector('#scanTime').value;
-
 
                 config.ScanMovies =
                     document.querySelector('#scanMovies').checked;
 
-
                 config.ScanSeries =
                     document.querySelector('#scanSeries').checked;
-
 
                 config.ScanSeriesSeasons =
                     document.querySelector('#scanSeriesSeasons').checked;
 
-
                 config.ScanSeriesEpisodes =
                     document.querySelector('#scanSeriesEpisodes').checked;
-
 
                 config.ScanAnime =
                     document.querySelector('#scanAnime').checked;
 
-
                 config.ScanAnimeSeasons =
                     document.querySelector('#scanAnimeSeasons').checked;
-
 
                 config.ScanAnimeEpisodes =
                     document.querySelector('#scanAnimeEpisodes').checked;
 
-
                 config.ScanAnimeMovies =
                     document.querySelector('#scanAnimeMovies').checked;
 
-
                 config.ScanCollections =
                     document.querySelector('#scanCollections').checked;
-
 
                 return config;
             }
 
 
             /*
-             * Save current settings
+             * Save configuration
              */
 
             function saveCurrentConfiguration(showResult) {
 
                 return ApiClient
-                    .getPluginConfiguration(
-                        DreamstreamingDiscordBotConfig.pluginUniqueId
-                    )
+                    .getPluginConfiguration(pluginId)
+
                     .then(function (config) {
 
-                        return ApiClient
-                            .updatePluginConfiguration(
-                                DreamstreamingDiscordBotConfig.pluginUniqueId,
-                                collectConfiguration(config)
-                            );
+                        collectConfiguration(config);
 
+                        return ApiClient.updatePluginConfiguration(
+                            pluginId,
+                            config
+                        );
                     })
+
                     .then(function (result) {
 
                         if (showResult) {
-
-                            Dashboard
-                                .processPluginConfigurationUpdateResult(
-                                    result
-                                );
+                            Dashboard.processPluginConfigurationUpdateResult(
+                                result
+                            );
                         }
 
                         return result;
@@ -731,42 +648,31 @@
 
 
             /*
-             * Parse backend response
+             * Parse response
              */
 
             function parsePluginResponse(response) {
 
-                return response
-                    .text()
-                    .then(function (text) {
+                return response.text().then(function (text) {
 
-                        if (!text) {
-                            return null;
-                        }
+                    if (!text) {
+                        return null;
+                    }
 
-                        try {
-
-                            return JSON.parse(text);
-
-                        }
-                        catch (_) {
-
-                            return {
-                                Message: text
-                            };
-                        }
-                    });
+                    try {
+                        return JSON.parse(text);
+                    }
+                    catch (_) {
+                        return {
+                            Message: text
+                        };
+                    }
+                });
             }
 
 
             /*
-             * Call plugin backend.
-             *
-             * This intentionally mirrors the PowerShell test
-             * that we already proved works:
-             *
-             * POST /Dreamstreaming/DiscordBot/<endpoint>
-             * X-Emby-Token: <configured Jellyfin API key>
+             * Backend call
              */
 
             function callPluginEndpoint(endpoint) {
@@ -777,7 +683,6 @@
                         .value
                         .trim();
 
-
                 if (!apiKey) {
 
                     return Promise.reject(
@@ -787,19 +692,15 @@
                     );
                 }
 
-
                 var url =
                     ApiClient.getUrl(
-                        'Dreamstreaming/DiscordBot/' +
-                        endpoint
+                        'Dreamstreaming/DiscordBot/' + endpoint
                     );
-
 
                 console.log(
                     'Dreamstreaming Discord Bot request:',
                     url
                 );
-
 
                 return fetch(
                     url,
@@ -811,281 +712,221 @@
                         }
                     }
                 )
-                    .then(function (response) {
+                .then(function (response) {
 
-                        return parsePluginResponse(response)
-                            .then(function (result) {
+                    return parsePluginResponse(response)
+                        .then(function (result) {
 
-                                if (!response.ok) {
+                            if (!response.ok) {
 
-                                    var message =
-                                        'HTTP ' +
-                                        response.status;
+                                var message =
+                                    'HTTP ' + response.status;
 
-
-                                    if (
-                                        result &&
-                                        result.Message
-                                    ) {
-
-                                        message +=
-                                            ': ' +
-                                            result.Message;
-                                    }
-
-
-                                    throw new Error(
-                                        message
-                                    );
+                                if (
+                                    result &&
+                                    result.Message
+                                ) {
+                                    message +=
+                                        ': ' + result.Message;
                                 }
 
+                                throw new Error(message);
+                            }
 
-                                return result;
-                            });
-                    });
+                            return result;
+                        });
+                });
             }
 
 
             /*
-             * Configuration page load
+             * Page loaded
              */
 
-            document
-                .querySelector('#configPage')
-                .addEventListener(
-                    'pageshow',
-                    function () {
+            page.addEventListener(
+                'pageshow',
+                function () {
 
-                        console.log(
-                            'Dreamstreaming Discord Bot configuration page loaded.'
-                        );
+                    console.log(
+                        'Dreamstreaming Discord Bot configuration page loaded.'
+                    );
 
+                    Dashboard.showLoadingMsg();
 
-                        Dashboard.showLoadingMsg();
+                    ApiClient
+                        .getPluginConfiguration(pluginId)
 
+                        .then(function (config) {
 
-                        ApiClient
-                            .getPluginConfiguration(
-                                DreamstreamingDiscordBotConfig.pluginUniqueId
-                            )
-                            .then(function (config) {
+                            applyConfiguration(config);
 
-                                applyConfiguration(
-                                    config
-                                );
+                            Dashboard.hideLoadingMsg();
+                        })
 
+                        .catch(function (error) {
 
-                                Dashboard.hideLoadingMsg();
-                            })
-                            .catch(function (error) {
+                            Dashboard.hideLoadingMsg();
 
-                                Dashboard.hideLoadingMsg();
+                            console.error(
+                                'Failed to load Dreamstreaming Discord Bot configuration:',
+                                error
+                            );
 
-
-                                console.error(
-                                    'Failed to load Dreamstreaming Discord Bot configuration:',
-                                    error
-                                );
-
-
-                                Dashboard.alert(
-                                    'Failed to load plugin configuration.'
-                                );
-                            });
-                    }
-                );
+                            Dashboard.alert(
+                                'Failed to load plugin configuration.'
+                            );
+                        });
+                }
+            );
 
 
             /*
              * Save button
              */
 
-            document
-                .querySelector('#configForm')
-                .addEventListener(
-                    'submit',
-                    function (event) {
+            form.addEventListener(
+                'submit',
+                function (event) {
 
-                        event.preventDefault();
+                    event.preventDefault();
 
+                    Dashboard.showLoadingMsg();
 
-                        Dashboard.showLoadingMsg();
+                    saveCurrentConfiguration(true)
 
+                        .catch(function (error) {
 
-                        saveCurrentConfiguration(true)
-                            .catch(function (error) {
+                            Dashboard.hideLoadingMsg();
 
-                                Dashboard.hideLoadingMsg();
+                            console.error(
+                                'Failed to save Dreamstreaming Discord Bot configuration:',
+                                error
+                            );
 
+                            Dashboard.alert(
+                                'Failed to save plugin configuration.'
+                            );
+                        });
 
-                                console.error(
-                                    'Failed to save Dreamstreaming Discord Bot configuration:',
-                                    error
-                                );
-
-
-                                Dashboard.alert(
-                                    'Failed to save plugin configuration.'
-                                );
-                            });
-
-
-                        return false;
-                    }
-                );
+                    return false;
+                }
+            );
 
 
             /*
-             * Test Discord button
+             * TEST DISCORD BUTTON
              */
 
-            document
-                .querySelector('#testDiscordButton')
-                .addEventListener(
-                    'click',
-                    function () {
+            testButton.addEventListener(
+                'click',
+                function () {
 
-                        console.log(
-                            'Dreamstreaming: Test Discord button clicked.'
-                        );
+                    console.log(
+                        'Dreamstreaming: Test Discord button clicked.'
+                    );
 
+                    Dashboard.showLoadingMsg();
 
-                        Dashboard.showLoadingMsg();
+                    saveCurrentConfiguration(false)
 
+                        .then(function () {
 
-                        /*
-                         * Save current values first.
-                         *
-                         * This guarantees the backend uses the webhook
-                         * currently visible in the settings page.
-                         */
+                            return callPluginEndpoint(
+                                'TestDiscord'
+                            );
+                        })
 
-                        saveCurrentConfiguration(false)
+                        .then(function (result) {
 
-                            .then(function () {
+                            Dashboard.hideLoadingMsg();
 
-                                return callPluginEndpoint(
-                                    'TestDiscord'
-                                );
-                            })
+                            Dashboard.alert(
+                                result && result.Message
+                                    ? result.Message
+                                    : 'Discord test successfully sent.'
+                            );
+                        })
 
-                            .then(function (result) {
+                        .catch(function (error) {
 
-                                Dashboard.hideLoadingMsg();
+                            Dashboard.hideLoadingMsg();
 
+                            console.error(
+                                'Dreamstreaming Discord webhook test failed:',
+                                error
+                            );
 
-                                Dashboard.alert(
-                                    result &&
-                                    result.Message
-
-                                        ? result.Message
-
-                                        : 'Discord test successfully sent.'
-                                );
-                            })
-
-                            .catch(function (error) {
-
-                                Dashboard.hideLoadingMsg();
-
-
-                                console.error(
-                                    'Dreamstreaming Discord webhook test failed:',
-                                    error
-                                );
-
-
-                                Dashboard.alert(
-                                    'Discord webhook test failed.\n\n' +
-                                    (
-                                        error &&
-                                        error.message
-
-                                            ? error.message
-
-                                            : 'Unknown error'
-                                    )
-                                );
-                            });
-                    }
-                );
+                            Dashboard.alert(
+                                'Discord webhook test failed.\n\n' +
+                                (
+                                    error && error.message
+                                        ? error.message
+                                        : 'Unknown error'
+                                )
+                            );
+                        });
+                }
+            );
 
 
             /*
-             * Run Scan Now button
+             * RUN SCAN BUTTON
              */
 
-            document
-                .querySelector('#runScanButton')
-                .addEventListener(
-                    'click',
-                    function () {
+            runScanButton.addEventListener(
+                'click',
+                function () {
 
-                        console.log(
-                            'Dreamstreaming: Run Scan Now button clicked.'
-                        );
+                    console.log(
+                        'Dreamstreaming: Run Scan Now button clicked.'
+                    );
 
+                    Dashboard.showLoadingMsg();
 
-                        Dashboard.showLoadingMsg();
+                    saveCurrentConfiguration(false)
 
+                        .then(function () {
 
-                        /*
-                         * Save current scan configuration before running.
-                         */
+                            return callPluginEndpoint(
+                                'RunScanNow'
+                            );
+                        })
 
-                        saveCurrentConfiguration(false)
+                        .then(function (result) {
 
-                            .then(function () {
+                            Dashboard.hideLoadingMsg();
 
-                                return callPluginEndpoint(
-                                    'RunScanNow'
-                                );
-                            })
+                            Dashboard.alert(
+                                result && result.Message
+                                    ? result.Message
+                                    : 'Scan completed successfully.'
+                            );
+                        })
 
-                            .then(function (result) {
+                        .catch(function (error) {
 
-                                Dashboard.hideLoadingMsg();
+                            Dashboard.hideLoadingMsg();
 
+                            console.error(
+                                'Dreamstreaming manual scan failed:',
+                                error
+                            );
 
-                                Dashboard.alert(
-                                    result &&
-                                    result.Message
-
-                                        ? result.Message
-
-                                        : 'Scan completed successfully.'
-                                );
-                            })
-
-                            .catch(function (error) {
-
-                                Dashboard.hideLoadingMsg();
-
-
-                                console.error(
-                                    'Dreamstreaming manual scan failed:',
-                                    error
-                                );
-
-
-                                Dashboard.alert(
-                                    'Manual scan failed.\n\n' +
-                                    (
-                                        error &&
-                                        error.message
-
-                                            ? error.message
-
-                                            : 'Unknown error'
-                                    )
-                                );
-                            });
-                    }
-                );
+                            Dashboard.alert(
+                                'Manual scan failed.\n\n' +
+                                (
+                                    error && error.message
+                                        ? error.message
+                                        : 'Unknown error'
+                                )
+                            );
+                        });
+                }
+            );
 
 
             /*
-             * Visibility listeners
+             * UI listeners
              */
 
             document
@@ -1095,14 +936,12 @@
                     updateScanDayVisibility
                 );
 
-
             document
                 .querySelector('#scanSeries')
                 .addEventListener(
                     'change',
                     updateSeriesVisibility
                 );
-
 
             document
                 .querySelector('#scanAnime')
@@ -1111,9 +950,11 @@
                     updateAnimeVisibility
                 );
 
-        </script>
+        }());
 
-    </div>
+    </script>
+
+</div>
 
 </body>
 </html>
