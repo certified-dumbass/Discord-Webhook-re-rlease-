@@ -26,7 +26,7 @@ Add the following **raw manifest URL** to your Jellyfin plugin repositories:
 
 **Repository URL:**
 
-https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook/refs/heads/main/manifest.json
+(https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/refs/heads/main/Webhook/manifest.json)
 
 ### How to add the repository
 
