@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <AssemblyName>Dreamstreaming.DiscordBot</AssemblyName>
+    <RootNamespace>Dreamstreaming.DiscordBot</RootNamespace>
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.8">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+
+    <PackageReference Include="Jellyfin.Model" Version="10.11.8">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <EmbeddedResource Include="Web\config.html">
+      <LogicalName>Dreamstreaming.DiscordBot.Web.config.html</LogicalName>
+    </EmbeddedResource>
+
+  </ItemGroup>
+
+</Project>

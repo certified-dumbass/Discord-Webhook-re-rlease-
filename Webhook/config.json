@@ -1,0 +1,14 @@
+{
+  "Jellyfin": {
+    "Url": "Place link to your jellyfin server here",
+    "ApiKey": "paste API here"
+  },
+
+  "Discord": {
+    "Webhook": "Here comes the discord webhook later on"
+  },
+
+  "Scan": {
+    "DaysBack": 7
+  }
+}

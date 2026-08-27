@@ -1,0 +1,35 @@
+Dreamstreaming Discord Bot - troubleshooting/refactor build
+==========================================================
+
+What changed
+------------
+- Added a real RunScanNow backend endpoint.
+- Added a Run Scan Now button to the Jellyfin configuration page.
+- Test Discord and Run Scan Now now use Jellyfin's ApiClient.fetch pattern.
+- Added ScanCoordinator to connect JellyfinService -> ScannerService -> DiscordWebhookService.
+- Added a hosted background scheduler registered through IPluginServiceRegistrator.
+- Scheduled scans now use ScanIntervalHours / ScanDay / ScanTime.
+- First scan creates a baseline instead of announcing the entire existing library.
+- lastscan.json and scheduler-state.json are stored in Jellyfin's plugin configuration area.
+- Discord messages are split safely when they grow too large.
+- Added better HTTP validation/errors and cancellation support.
+- Fixed nullable model warnings for Name/Id/PosterUrl.
+
+Important
+---------
+- Anime / Anime Movies / Collections / season / episode filters are still stored by the UI,
+  but this refactor only actively scans Movies and Series. Those content types should be
+  implemented after the core scan + scheduler flow is confirmed working.
+- manifest.json has deliberately NOT been bumped in this source archive. Build and test first,
+  then create the next release version and update manifest.json with that ZIP's MD5.
+
+Recommended first test
+----------------------
+1. Replace your local project with these source files (or compare/copy them).
+2. Run: dotnet publish -c Release
+3. Create a NEW versioned ZIP/release; do not overwrite an old GitHub release asset.
+4. Install that new version in Jellyfin and restart Jellyfin.
+5. Save Jellyfin URL, Jellyfin API key and Discord webhook.
+6. Click Test Discord Webhook.
+7. Click Run Scan Now. On first run it creates a baseline. Add new media, scan Jellyfin,
+   then click Run Scan Now again to test a real notification.
