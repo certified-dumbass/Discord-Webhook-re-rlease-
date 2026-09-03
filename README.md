@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="banner.png"
+  <img src="https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/main/banner.png"
        alt="Dreamstreaming Discord Bot"
        width="100%">
 </p>
