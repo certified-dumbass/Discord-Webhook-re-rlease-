@@ -9,11 +9,11 @@
     "imageUrl": "https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/main/thumbnail.png",
     "versions": [
       {
-        "version": "1.2.3",
-        "changelog": "Fixed Jellyfin 10.11.x library scanning and set the plugin assembly version to 1.2.3.",
+        "version": "1.2.4",
+        "changelog": "Added customizable Discord notification branding and update titles, including Library, Server, Website and Custom update types.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/certified-dumbass/Discord-Webhook-re-rlease-/releases/download/v1.2.3/Dreamstreaming.DiscordBot_1.2.3.zip",
-        "checksum": "AFD32007BED8671BCA7D9BE5BD219AAB",
+        "sourceUrl": "https://github.com/certified-dumbass/Discord-Webhook-re-rlease-/releases/download/v1.2.4/Dreamstreaming.DiscordBot_1.2.4.zip",
+        "checksum": "FBED873C587C82FDA91392528CD319D6",
         "timestamp": "2026-09-03T00:00:00Z"
       }
     ]
