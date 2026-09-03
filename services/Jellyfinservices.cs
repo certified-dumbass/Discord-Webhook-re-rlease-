@@ -373,9 +373,10 @@ public sealed class JellyfinService : IDisposable
         CancellationToken cancellationToken = default)
     {
         string url =
-            BuildLatestItemsUrl(
+            BuildItemsUrl(
                 "Season",
-                parentId);
+                parentId,
+                "DateCreated,ProductionYear,SeriesId,SeriesName,IndexNumber");
 
         using var response =
             await _client
@@ -430,9 +431,10 @@ public sealed class JellyfinService : IDisposable
         CancellationToken cancellationToken = default)
     {
         string url =
-            BuildLatestItemsUrl(
+            BuildItemsUrl(
                 "Episode",
-                parentId);
+                parentId,
+                "DateCreated,ProductionYear,SeriesId,SeriesName,SeasonId,SeasonName,ParentIndexNumber,IndexNumber");
 
         using var response =
             await _client
@@ -602,13 +604,14 @@ public sealed class JellyfinService : IDisposable
 
     private string BuildItemsUrl(
         string itemType,
-        string? parentId)
+        string? parentId,
+        string fields = "DateCreated,ProductionYear")
     {
         string url =
             $"{_jellyfinUrl}/Items" +
             $"?Recursive=true" +
             $"&IncludeItemTypes={Uri.EscapeDataString(itemType)}" +
-            $"&Fields=DateCreated,ProductionYear";
+            $"&Fields={Uri.EscapeDataString(fields)}";
 
 
         if (!string.IsNullOrWhiteSpace(parentId))
