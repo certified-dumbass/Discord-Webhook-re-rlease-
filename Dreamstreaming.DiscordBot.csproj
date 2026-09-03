@@ -8,7 +8,11 @@
     <AssemblyName>Dreamstreaming.DiscordBot</AssemblyName>
     <RootNamespace>Dreamstreaming.DiscordBot</RootNamespace>
 
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>1.2.3</Version>
+    <AssemblyVersion>1.2.3.0</AssemblyVersion>
+    <FileVersion>1.2.3.0</FileVersion>
+
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
