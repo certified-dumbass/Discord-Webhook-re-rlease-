@@ -375,8 +375,7 @@ public sealed class JellyfinService : IDisposable
         string url =
             BuildLatestItemsUrl(
                 "Season",
-                parentId,
-                "DateCreated,ProductionYear,SeriesId,SeriesName,IndexNumber");
+                parentId);
 
         using var response =
             await _client
@@ -433,8 +432,7 @@ public sealed class JellyfinService : IDisposable
         string url =
             BuildLatestItemsUrl(
                 "Episode",
-                parentId,
-                "DateCreated,ProductionYear,SeriesId,SeriesName,SeasonId,SeasonName,ParentIndexNumber,IndexNumber");
+                parentId);
 
         using var response =
             await _client
