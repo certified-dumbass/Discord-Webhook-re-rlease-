@@ -94,7 +94,7 @@ public sealed class DiscordWebhookService : IDisposable
         CancellationToken cancellationToken = default)
     {
         return SendMessage(
-            "💜 **Dreamstreaming Discord Bot**\n\n" +
+            $"💜 **{GetNotificationTitle()}**\n\n" +
             "✅ Test successful!\n" +
             "Your Discord webhook is configured correctly.\n\n" +
             "Jellyfin updates will be posted to this channel.",
@@ -147,7 +147,7 @@ public sealed class DiscordWebhookService : IDisposable
         if (result.BaselineInitialized)
         {
             yield return
-                "💜 **Dreamstreaming Discord Bot**\n\n" +
+                $"💜 **{GetNotificationTitle()}**\n\n" +
                 "✅ Scan baseline created successfully.\n" +
                 "Newly added content will be announced from now on.";
 
@@ -221,7 +221,13 @@ public sealed class DiscordWebhookService : IDisposable
                 ["{count}"] =
                     _configuration.ShowTotalCount
                         ? totalCount.ToString()
-                        : string.Empty
+                        : string.Empty,
+
+                ["{title}"] =
+                    GetNotificationTitle(),
+
+                ["{name}"] =
+                    GetNotificationName()
             };
 
         foreach (KeyValuePair<string, string> replacement in replacements)
@@ -1194,7 +1200,7 @@ public sealed class DiscordWebhookService : IDisposable
         {
             return
                 "Hey everyone! 👋\n\n" +
-                "Here is your {schedule} Dreamstreaming update.\n\n" +
+                $"Here is your {{schedule}} {GetNotificationTitle().ToLowerInvariant()}.\n\n" +
                 "{libraries}\n\n" +
                 "{count} new additions just dropped. Have fun watching! 💜";
         }
@@ -1204,21 +1210,70 @@ public sealed class DiscordWebhookService : IDisposable
                 StringComparison.OrdinalIgnoreCase))
         {
             return
-                "💜 **Dreamstreaming Update**\n\n" +
+                $"💜 **{GetNotificationTitle()}**\n\n" +
                 "{libraries}";
         }
 
         return GetDefaultTemplate();
     }
 
-    private static string GetDefaultTemplate()
+    private string GetDefaultTemplate()
     {
+        string closingLine =
+            string.IsNullOrWhiteSpace(GetNotificationName())
+                ? "🌙 Enjoy watching!"
+                : $"🌙 Enjoy watching on {GetNotificationName()}!";
+
         return
-            "💜 **Dreamstreaming Library Update**\n\n" +
+            $"💜 **{GetNotificationTitle()}**\n\n" +
             "Here is your {schedule} update on newly added content.\n\n" +
             "{libraries}\n\n" +
             "✅ {count} new additions.\n\n" +
-            "🌙 Enjoy watching on Dreamstreaming!";
+            closingLine;
+    }
+
+    private string GetNotificationTitle()
+    {
+        string type =
+            _configuration.NotificationType?.Trim() ??
+            "Library";
+
+        if (type.Equals(
+                "Custom",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(
+                    _configuration.CustomNotificationTitle))
+            {
+                return _configuration.CustomNotificationTitle.Trim();
+            }
+
+            return "Update";
+        }
+
+        string updateType =
+            type.Equals(
+                "Server",
+                StringComparison.OrdinalIgnoreCase)
+                ? "Server Update"
+                : type.Equals(
+                    "Website",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? "Website Update"
+                    : "Library Update";
+
+        string name =
+            GetNotificationName();
+
+        return string.IsNullOrWhiteSpace(name)
+            ? updateType
+            : $"{name} {updateType}";
+    }
+
+    private string GetNotificationName()
+    {
+        return _configuration.NotificationName?.Trim() ??
+               string.Empty;
     }
 
     private string GetScheduleText()

@@ -208,6 +208,54 @@
                         Choose how your Discord update messages should look.
                     </div>
 
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="notificationName">
+                            Server / Brand Name
+                        </label>
+                        <input id="notificationName"
+                               name="notificationName"
+                               type="text"
+                               is="emby-input"
+                               placeholder="Dreamstreaming" />
+                        <div class="fieldDescription">
+                            Optional. Leave empty to show only the update type, for example Library Update.
+                        </div>
+                    </div>
+
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="notificationType">
+                            Update Type
+                        </label>
+                        <select id="notificationType"
+                                name="notificationType"
+                                is="emby-select"
+                                class="emby-select-withcolor emby-select">
+                            <option value="Library">Library Update</option>
+                            <option value="Server">Server Update</option>
+                            <option value="Website">Website Update</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                        <div class="fieldDescription">
+                            Combined with the optional server / brand name in Discord notifications.
+                        </div>
+                    </div>
+
+                    <div id="customNotificationTitleContainer"
+                         class="inputContainer"
+                         style="display:none;">
+                        <label class="inputLabel inputLabelUnfocused" for="customNotificationTitle">
+                            Custom Notification Title
+                        </label>
+                        <input id="customNotificationTitle"
+                               name="customNotificationTitle"
+                               type="text"
+                               is="emby-input"
+                               placeholder="Weekly Drop" />
+                        <div class="fieldDescription">
+                            Used as the complete title when Update Type is set to Custom.
+                        </div>
+                    </div>
+
                     <div class="selectContainer">
                         <label class="selectLabel" for="messageStyle">
                             Message Style
@@ -449,6 +497,21 @@
                     .style
                     .display =
                         interval === 168
+                            ? ''
+                            : 'none';
+            }
+
+
+            function updateNotificationTypeVisibility() {
+
+                var type =
+                    document.querySelector('#notificationType').value;
+
+                document
+                    .querySelector('#customNotificationTitleContainer')
+                    .style
+                    .display =
+                        type === 'Custom'
                             ? ''
                             : 'none';
             }
@@ -1466,6 +1529,15 @@
                 document.querySelector('#scanTime').value =
                     config.ScanTime || '20:00';
 
+                document.querySelector('#notificationName').value =
+                    config.NotificationName || '';
+
+                document.querySelector('#notificationType').value =
+                    config.NotificationType || 'Library';
+
+                document.querySelector('#customNotificationTitle').value =
+                    config.CustomNotificationTitle || '';
+
                 document.querySelector('#messageStyle').value =
                     config.MessageStyle || 'Default';
 
@@ -1508,6 +1580,7 @@
 
 
                 updateScanDayVisibility();
+                updateNotificationTypeVisibility();
                 updateMessageStyleVisibility();
                 updateCategoryOrderVisibility();
             }
@@ -1695,6 +1768,15 @@
                 config.ScanAnimeEpisodes =
                     false;
 
+
+                config.NotificationName =
+                    document.querySelector('#notificationName').value.trim();
+
+                config.NotificationType =
+                    document.querySelector('#notificationType').value;
+
+                config.CustomNotificationTitle =
+                    document.querySelector('#customNotificationTitle').value.trim();
 
                 config.MessageStyle =
                     document.querySelector('#messageStyle').value;
@@ -2023,6 +2105,13 @@
                 .addEventListener(
                     'change',
                     updateScanDayVisibility
+                );
+
+            document
+                .querySelector('#notificationType')
+                .addEventListener(
+                    'change',
+                    updateNotificationTypeVisibility
                 );
 
             document

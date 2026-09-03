@@ -45,6 +45,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public string[] CollectionLibraryIds { get; set; } =
         Array.Empty<string>();
 
+    // Discord notification branding
+    public string NotificationName { get; set; } = string.Empty;
+
+    public string NotificationType { get; set; } = "Library";
+
+    public string CustomNotificationTitle { get; set; } = string.Empty;
+
     // Discord message style
     public string MessageStyle { get; set; } = "Default";
 
