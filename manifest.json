@@ -6,7 +6,7 @@
     "overview": "Automatically scan Jellyfin and post newly added movies and series to Discord.",
     "owner": "Certified-dumbass",
     "category": "General",
-    "imageUrl": "https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/main/thumbnail.png",
+    "imageUrl": "https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/main/thumbnail.png?v=1.2.4",
     "versions": [
       {
         "version": "1.2.4",
