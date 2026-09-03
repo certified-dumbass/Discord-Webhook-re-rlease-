@@ -186,10 +186,13 @@ public sealed class JellyfinService : IDisposable
         string libraryName,
         CancellationToken cancellationToken = default)
     {
+        bool useLibraryItems =
+            !string.IsNullOrWhiteSpace(parentId);
+
         string url =
-            BuildLatestItemsUrl(
-                "Movie",
-                parentId);
+            useLibraryItems
+                ? BuildItemsUrl("Movie", parentId)
+                : BuildLatestItemsUrl("Movie", parentId);
 
 
         using var response =
@@ -215,15 +218,31 @@ public sealed class JellyfinService : IDisposable
 
         var movies =
             new List<Movie>();
-        if (document.RootElement.ValueKind !=
-            JsonValueKind.Array)
+        JsonElement movieItems;
+
+        if (useLibraryItems)
         {
-            return movies;
+            if (!document.RootElement.TryGetProperty(
+                    "Items",
+                    out movieItems) ||
+                movieItems.ValueKind != JsonValueKind.Array)
+            {
+                return movies;
+            }
+        }
+        else
+        {
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return movies;
+            }
+
+            movieItems = document.RootElement;
         }
 
 
         foreach (JsonElement item
-                 in document.RootElement.EnumerateArray())
+                 in movieItems.EnumerateArray())
         {
             DateTime dateAdded =
                 TryGetDateAdded(item);
@@ -283,10 +302,13 @@ public sealed class JellyfinService : IDisposable
         string libraryName,
         CancellationToken cancellationToken = default)
     {
+        bool useLibraryItems =
+            !string.IsNullOrWhiteSpace(parentId);
+
         string url =
-            BuildLatestItemsUrl(
-                "Series",
-                parentId);
+            useLibraryItems
+                ? BuildItemsUrl("Series", parentId)
+                : BuildLatestItemsUrl("Series", parentId);
 
 
         using var response =
@@ -314,15 +336,31 @@ public sealed class JellyfinService : IDisposable
             new List<Series>();
 
 
-        if (document.RootElement.ValueKind !=
-            JsonValueKind.Array)
+        JsonElement seriesItems;
+
+        if (useLibraryItems)
         {
-            return series;
+            if (!document.RootElement.TryGetProperty(
+                    "Items",
+                    out seriesItems) ||
+                seriesItems.ValueKind != JsonValueKind.Array)
+            {
+                return series;
+            }
+        }
+        else
+        {
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return series;
+            }
+
+            seriesItems = document.RootElement;
         }
 
 
         foreach (JsonElement item
-                 in document.RootElement.EnumerateArray())
+                 in seriesItems.EnumerateArray())
         {
             DateTime dateAdded =
                 TryGetDateAdded(item);
@@ -398,12 +436,15 @@ public sealed class JellyfinService : IDisposable
         var seasons =
             new List<SeasonScanItem>();
 
-        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        if (!document.RootElement.TryGetProperty(
+                "Items",
+                out JsonElement seasonItems) ||
+            seasonItems.ValueKind != JsonValueKind.Array)
         {
             return seasons;
         }
 
-        foreach (JsonElement item in document.RootElement.EnumerateArray())
+        foreach (JsonElement item in seasonItems.EnumerateArray())
         {
             seasons.Add(
                 new SeasonScanItem
@@ -456,12 +497,15 @@ public sealed class JellyfinService : IDisposable
         var episodes =
             new List<EpisodeScanItem>();
 
-        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        if (!document.RootElement.TryGetProperty(
+                "Items",
+                out JsonElement episodeItems) ||
+            episodeItems.ValueKind != JsonValueKind.Array)
         {
             return episodes;
         }
 
-        foreach (JsonElement item in document.RootElement.EnumerateArray())
+        foreach (JsonElement item in episodeItems.EnumerateArray())
         {
             episodes.Add(
                 new EpisodeScanItem
