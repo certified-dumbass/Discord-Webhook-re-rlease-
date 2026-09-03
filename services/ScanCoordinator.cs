@@ -23,19 +23,28 @@ public sealed class ScanCoordinator
 
         var configuration = plugin.Configuration;
 
-        ValidateConfiguration(configuration.JellyfinUrl, configuration.JellyfinApiKey, configuration.DiscordWebhook);
+        ValidateConfiguration(
+            configuration.JellyfinUrl,
+            configuration.JellyfinApiKey,
+            configuration.DiscordWebhook);
 
-        await ScanLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await ScanLock
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         try
         {
-            Directory.CreateDirectory(plugin.StateDirectory);
+            Directory.CreateDirectory(
+                plugin.StateDirectory);
 
             string lastScanFile =
-                Path.Combine(plugin.StateDirectory, "lastscan.json");
+                Path.Combine(
+                    plugin.StateDirectory,
+                    "lastscan.json");
 
             using var jellyfinService =
-                new JellyfinService(configuration);
+                new JellyfinService(
+                    configuration);
 
             var scanner =
                 new ScannerService(
@@ -44,7 +53,8 @@ public sealed class ScanCoordinator
                     lastScanFile);
 
             ScanResult result =
-                await scanner.ScanAsync(cancellationToken)
+                await scanner
+                    .ScanAsync(cancellationToken)
                     .ConfigureAwait(false);
 
             bool shouldSend =
@@ -55,9 +65,14 @@ public sealed class ScanCoordinator
             if (shouldSend)
             {
                 using var discordService =
-                    new DiscordWebhookService(configuration.DiscordWebhook);
+                    new DiscordWebhookService(
+                        configuration.DiscordWebhook,
+                        configuration);
 
-                await discordService.SendScanResult(result, cancellationToken)
+                await discordService
+                    .SendScanResult(
+                        result,
+                        cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -76,7 +91,9 @@ public sealed class ScanCoordinator
                 "Dreamstreaming Discord Bot plugin instance is unavailable.");
 
         string lastScanFile =
-            Path.Combine(plugin.StateDirectory, "lastscan.json");
+            Path.Combine(
+                plugin.StateDirectory,
+                "lastscan.json");
 
         if (File.Exists(lastScanFile))
         {

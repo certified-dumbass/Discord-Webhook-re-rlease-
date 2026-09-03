@@ -11,15 +11,24 @@ namespace Dreamstreaming.DiscordBot.Services;
 
 public sealed class JellyfinService : IDisposable
 {
+    private const int LatestItemLimit = 250;
+
     private readonly string _jellyfinUrl;
     private readonly HttpClient _client;
 
-    public JellyfinService(PluginConfiguration configuration)
-        : this(configuration.JellyfinUrl, configuration.JellyfinApiKey)
+
+    public JellyfinService(
+        PluginConfiguration configuration)
+        : this(
+            configuration.JellyfinUrl,
+            configuration.JellyfinApiKey)
     {
     }
 
-    public JellyfinService(string jellyfinUrl, string apiKey)
+
+    public JellyfinService(
+        string jellyfinUrl,
+        string apiKey)
     {
         if (string.IsNullOrWhiteSpace(jellyfinUrl))
         {
@@ -28,14 +37,18 @@ public sealed class JellyfinService : IDisposable
                 nameof(jellyfinUrl));
         }
 
-        if (!Uri.TryCreate(jellyfinUrl.Trim(), UriKind.Absolute, out var uri))
+        if (!Uri.TryCreate(
+                jellyfinUrl.Trim(),
+                UriKind.Absolute,
+                out var uri))
         {
             throw new ArgumentException(
                 "Jellyfin URL is invalid.",
                 nameof(jellyfinUrl));
         }
 
-        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+        if (uri.Scheme != Uri.UriSchemeHttp &&
+            uri.Scheme != Uri.UriSchemeHttps)
         {
             throw new ArgumentException(
                 "Jellyfin URL must use HTTP or HTTPS.",
@@ -49,130 +62,560 @@ public sealed class JellyfinService : IDisposable
                 nameof(apiKey));
         }
 
-        _jellyfinUrl = jellyfinUrl.Trim().TrimEnd('/');
-        _client = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+
+        _jellyfinUrl =
+            jellyfinUrl
+                .Trim()
+                .TrimEnd('/');
+
+
+        _client =
+            new HttpClient
+            {
+                Timeout =
+                    TimeSpan.FromSeconds(60)
+            };
+
 
         _client.DefaultRequestHeaders.Add(
             "X-Emby-Token",
             apiKey.Trim());
     }
 
-    public async Task<List<Movie>> GetMovies(
+
+    // ============================================================
+    // Libraries
+    // ============================================================
+
+    public async Task<List<JellyfinLibrary>> GetLibraries(
         CancellationToken cancellationToken = default)
     {
-        var movies = new List<Movie>();
-
         string url =
-            $"{_jellyfinUrl}/Items?Recursive=true&IncludeItemTypes=Movie&Fields=DateCreated,ProductionYear";
+            $"{_jellyfinUrl}/Library/VirtualFolders";
+
 
         using var response =
-            await _client.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
 
         response.EnsureSuccessStatusCode();
 
+
         string json =
-            await response.Content.ReadAsStringAsync(cancellationToken)
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-        using JsonDocument document = JsonDocument.Parse(json);
 
-        if (!document.RootElement.TryGetProperty("Items", out var items))
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+
+        var libraries =
+            new List<JellyfinLibrary>();
+
+
+        if (document.RootElement.ValueKind !=
+            JsonValueKind.Array)
+        {
+            return libraries;
+        }
+
+
+        foreach (JsonElement item
+                 in document.RootElement.EnumerateArray())
+        {
+            string id =
+                GetString(
+                    item,
+                    "ItemId");
+
+
+            string name =
+                GetString(
+                    item,
+                    "Name");
+
+
+            string collectionType =
+                GetString(
+                    item,
+                    "CollectionType");
+
+
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
+
+            libraries.Add(
+                new JellyfinLibrary
+                {
+                    Id = id,
+                    Name = name,
+                    CollectionType = collectionType
+                });
+        }
+
+
+        return libraries;
+    }
+
+
+    // ============================================================
+    // Movies
+    // ============================================================
+
+    public Task<List<Movie>> GetMovies(
+        CancellationToken cancellationToken = default)
+    {
+        return GetMovies(
+            parentId: null,
+            libraryName: string.Empty,
+            cancellationToken);
+    }
+
+
+    public async Task<List<Movie>> GetMovies(
+        string? parentId,
+        string libraryName,
+        CancellationToken cancellationToken = default)
+    {
+        string url =
+            BuildLatestItemsUrl(
+                "Movie",
+                parentId);
+
+
+        using var response =
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+
+        response.EnsureSuccessStatusCode();
+
+
+        string json =
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+
+        var movies =
+            new List<Movie>();
+
+
+        /*
+         * /Items/Latest returns a JSON array directly,
+         * unlike /Items which returns:
+         *
+         * {
+         *     "Items": [...]
+         * }
+         */
+        if (document.RootElement.ValueKind !=
+            JsonValueKind.Array)
         {
             return movies;
         }
 
-        foreach (var item in items.EnumerateArray())
-        {
-            var dateAdded = TryGetDateAdded(item);
 
-            movies.Add(new Movie
-            {
-                Id = GetString(item, "Id"),
-                Name = GetString(item, "Name"),
-                DateAdded = dateAdded,
-                Year = TryGetInt(item, "ProductionYear")
-            });
+        foreach (JsonElement item
+                 in document.RootElement.EnumerateArray())
+        {
+            DateTime dateAdded =
+                TryGetDateAdded(item);
+
+
+            movies.Add(
+                new Movie
+                {
+                    Id =
+                        GetString(
+                            item,
+                            "Id"),
+
+                    Name =
+                        GetString(
+                            item,
+                            "Name"),
+
+                    DateAdded =
+                        dateAdded,
+
+                    Year =
+                        TryGetInt(
+                            item,
+                            "ProductionYear"),
+
+                    LibraryId =
+                        parentId ??
+                        string.Empty,
+
+                    LibraryName =
+                        libraryName
+                });
         }
+
 
         return movies;
     }
 
-    public async Task<List<Series>> GetSeries(
+
+    // ============================================================
+    // Series
+    // ============================================================
+
+    public Task<List<Series>> GetSeries(
         CancellationToken cancellationToken = default)
     {
-        var series = new List<Series>();
+        return GetSeries(
+            parentId: null,
+            libraryName: string.Empty,
+            cancellationToken);
+    }
 
+
+    public async Task<List<Series>> GetSeries(
+        string? parentId,
+        string libraryName,
+        CancellationToken cancellationToken = default)
+    {
         string url =
-            $"{_jellyfinUrl}/Items?Recursive=true&IncludeItemTypes=Series&Fields=DateCreated,ProductionYear";
+            BuildLatestItemsUrl(
+                "Series",
+                parentId);
+
 
         using var response =
-            await _client.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
 
         response.EnsureSuccessStatusCode();
 
+
         string json =
-            await response.Content.ReadAsStringAsync(cancellationToken)
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-        using JsonDocument document = JsonDocument.Parse(json);
 
-        if (!document.RootElement.TryGetProperty("Items", out var items))
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+
+        var series =
+            new List<Series>();
+
+
+        if (document.RootElement.ValueKind !=
+            JsonValueKind.Array)
         {
             return series;
         }
 
-        foreach (var item in items.EnumerateArray())
-        {
-            var dateAdded = TryGetDateAdded(item);
 
-            series.Add(new Series
-            {
-                Id = GetString(item, "Id"),
-                Name = GetString(item, "Name"),
-                DateAdded = dateAdded,
-                Year = TryGetInt(item, "ProductionYear")
-            });
+        foreach (JsonElement item
+                 in document.RootElement.EnumerateArray())
+        {
+            DateTime dateAdded =
+                TryGetDateAdded(item);
+
+
+            series.Add(
+                new Series
+                {
+                    Id =
+                        GetString(
+                            item,
+                            "Id"),
+
+                    Name =
+                        GetString(
+                            item,
+                            "Name"),
+
+                    DateAdded =
+                        dateAdded,
+
+                    Year =
+                        TryGetInt(
+                            item,
+                            "ProductionYear"),
+
+                    LibraryId =
+                        parentId ??
+                        string.Empty,
+
+                    LibraryName =
+                        libraryName
+                });
         }
+
 
         return series;
     }
 
-    private static string GetString(JsonElement element, string name)
+
+    // ============================================================
+    // Collections
+    // ============================================================
+
+    public Task<List<CollectionItem>> GetCollections(
+        CancellationToken cancellationToken = default)
     {
-        return element.TryGetProperty(name, out var value)
-            ? value.GetString() ?? string.Empty
-            : string.Empty;
+        return GetCollections(
+            parentId: null,
+            cancellationToken);
     }
 
-    private static int? TryGetInt(JsonElement element, string name)
+
+    public async Task<List<CollectionItem>> GetCollections(
+        string? parentId,
+        CancellationToken cancellationToken = default)
     {
-        if (!element.TryGetProperty(name, out var value))
+        /*
+         * Collections behave slightly differently from normal
+         * Movies / Series libraries.
+         *
+         * Keep using the normal recursive Items endpoint here.
+         * BoxSets are not always represented consistently through
+         * /Items/Latest on every Jellyfin setup.
+         */
+
+        string url =
+            BuildItemsUrl(
+                "BoxSet",
+                parentId);
+
+
+        using var response =
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+
+        response.EnsureSuccessStatusCode();
+
+
+        string json =
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+
+        var collections =
+            new List<CollectionItem>();
+
+
+        if (!document.RootElement.TryGetProperty(
+                "Items",
+                out JsonElement items))
+        {
+            return collections;
+        }
+
+
+        foreach (JsonElement item
+                 in items.EnumerateArray())
+        {
+            collections.Add(
+                new CollectionItem
+                {
+                    Id =
+                        GetString(
+                            item,
+                            "Id"),
+
+                    Name =
+                        GetString(
+                            item,
+                            "Name"),
+
+                    DateAdded =
+                        TryGetDateAdded(
+                            item),
+
+                    Year =
+                        TryGetInt(
+                            item,
+                            "ProductionYear")
+                });
+        }
+
+
+        return collections;
+    }
+
+
+    // ============================================================
+    // Latest items URL
+    // ============================================================
+
+    private string BuildLatestItemsUrl(
+        string itemType,
+        string? parentId)
+    {
+        string url =
+            $"{_jellyfinUrl}/Items/Latest" +
+            $"?IncludeItemTypes={Uri.EscapeDataString(itemType)}" +
+            $"&Limit={LatestItemLimit}" +
+            $"&Fields=DateCreated,ProductionYear";
+
+
+        if (!string.IsNullOrWhiteSpace(parentId))
+        {
+            url +=
+                $"&ParentId={Uri.EscapeDataString(parentId)}";
+        }
+
+
+        return url;
+    }
+
+
+    // ============================================================
+    // Normal Items URL
+    // ============================================================
+
+    private string BuildItemsUrl(
+        string itemType,
+        string? parentId)
+    {
+        string url =
+            $"{_jellyfinUrl}/Items" +
+            $"?Recursive=true" +
+            $"&IncludeItemTypes={Uri.EscapeDataString(itemType)}" +
+            $"&Fields=DateCreated,ProductionYear";
+
+
+        if (!string.IsNullOrWhiteSpace(parentId))
+        {
+            url +=
+                $"&ParentId={Uri.EscapeDataString(parentId)}";
+        }
+
+
+        return url;
+    }
+
+
+    // ============================================================
+    // JSON helpers
+    // ============================================================
+
+    private static string GetString(
+        JsonElement element,
+        string name)
+    {
+        if (!element.TryGetProperty(
+                name,
+                out JsonElement value))
+        {
+            return string.Empty;
+        }
+
+
+        if (value.ValueKind !=
+            JsonValueKind.String)
+        {
+            return string.Empty;
+        }
+
+
+        return value.GetString() ??
+               string.Empty;
+    }
+
+
+    private static int? TryGetInt(
+        JsonElement element,
+        string name)
+    {
+        if (!element.TryGetProperty(
+                name,
+                out JsonElement value))
         {
             return null;
         }
 
-        return value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int result)
-            ? result
-            : null;
+
+        if (value.ValueKind ==
+                JsonValueKind.Number &&
+            value.TryGetInt32(
+                out int result))
+        {
+            return result;
+        }
+
+
+        return null;
     }
 
-    private static DateTime TryGetDateAdded(JsonElement element)
+
+    private static DateTime TryGetDateAdded(
+        JsonElement element)
     {
-        if (!element.TryGetProperty("DateCreated", out var value))
+        /*
+         * DateCreated is the Jellyfin field currently used by
+         * the plugin as the item's library-added timestamp.
+         *
+         * Items/Latest already limits the candidates to Jellyfin's
+         * recently-added content, which makes this considerably more
+         * reliable than querying the complete library every scan.
+         */
+
+        if (!element.TryGetProperty(
+                "DateCreated",
+                out JsonElement value))
         {
             return DateTime.MinValue;
         }
 
-        if (!value.TryGetDateTime(out var date))
+
+        if (value.ValueKind !=
+            JsonValueKind.String)
         {
             return DateTime.MinValue;
         }
+
+
+        if (!value.TryGetDateTime(
+                out DateTime date))
+        {
+            return DateTime.MinValue;
+        }
+
 
         return date.ToUniversalTime();
     }
+
+
+    // ============================================================
+    // Dispose
+    // ============================================================
 
     public void Dispose()
     {

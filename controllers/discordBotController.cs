@@ -1,5 +1,4 @@
 using System;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Dreamstreaming.DiscordBot.Services;
@@ -13,6 +12,89 @@ namespace Dreamstreaming.DiscordBot.Controllers;
 [Authorize(Policy = "RequiresElevation")]
 public class DiscordBotController : ControllerBase
 {
+    [HttpGet("Libraries")]
+    public async Task<ActionResult> GetLibraries(
+        CancellationToken cancellationToken)
+    {
+        var plugin = Plugin.Instance;
+
+        if (plugin is null)
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        "Dreamstreaming Discord Bot plugin instance is unavailable."
+                });
+        }
+
+        var configuration =
+            plugin.Configuration;
+
+        if (string.IsNullOrWhiteSpace(
+                configuration.JellyfinUrl))
+        {
+            return BadRequest(
+                new
+                {
+                    Message =
+                        "Jellyfin URL is not configured."
+                });
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                configuration.JellyfinApiKey))
+        {
+            return BadRequest(
+                new
+                {
+                    Message =
+                        "Jellyfin API key is not configured."
+                });
+        }
+
+        try
+        {
+            using var jellyfinService =
+                new JellyfinService(
+                    configuration);
+
+            var libraries =
+                await jellyfinService
+                    .GetLibraries(
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+            return Ok(
+                new
+                {
+                    Libraries =
+                        libraries
+                });
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(
+                new
+                {
+                    Message =
+                        exception.Message
+                });
+        }
+        catch (Exception exception)
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        $"Failed to load Jellyfin libraries: {exception.Message}"
+                });
+        }
+    }
+
+
     [HttpPost("TestDiscord")]
     public async Task<ActionResult> TestDiscord(
         CancellationToken cancellationToken)
@@ -21,63 +103,69 @@ public class DiscordBotController : ControllerBase
 
         if (plugin is null)
         {
-            return StatusCode(500, new
-            {
-                Success = false,
-                Message = "Dreamstreaming Discord Bot plugin instance is not available."
-            });
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        "Dreamstreaming Discord Bot plugin instance is unavailable."
+                });
         }
 
-        var configuration = plugin.Configuration;
+        var configuration =
+            plugin.Configuration;
 
-        if (string.IsNullOrWhiteSpace(configuration.DiscordWebhook))
+        if (string.IsNullOrWhiteSpace(
+                configuration.DiscordWebhook))
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Discord webhook is not configured. Save the plugin settings first."
-            });
+            return BadRequest(
+                new
+                {
+                    Message =
+                        "Discord webhook is not configured."
+                });
         }
 
         try
         {
             using var discordService =
-                new DiscordWebhookService(configuration.DiscordWebhook);
+                new DiscordWebhookService(
+                    configuration.DiscordWebhook,
+                    configuration);
 
-            await discordService.SendTestMessage(cancellationToken)
+            await discordService
+                .SendTestMessage(
+                    cancellationToken)
                 .ConfigureAwait(false);
 
-            return Ok(new
-            {
-                Success = true,
-                Message = "Discord webhook test succesvol verzonden."
-            });
+            return Ok(
+                new
+                {
+                    Message =
+                        "Discord test message sent successfully."
+                });
         }
-        catch (HttpRequestException ex)
+        catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = $"Discord weigerde de webhook request: {ex.Message}"
-            });
+            return BadRequest(
+                new
+                {
+                    Message =
+                        exception.Message
+                });
         }
-        catch (ArgumentException ex)
+        catch (Exception exception)
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = $"Ongeldige Discord webhook: {ex.Message}"
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Success = false,
-                Message = $"Onverwachte fout tijdens Discord test: {ex.Message}"
-            });
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        $"Discord test failed: {exception.Message}"
+                });
         }
     }
+
 
     [HttpPost("RunScanNow")]
     public async Task<ActionResult> RunScanNow(
@@ -85,81 +173,95 @@ public class DiscordBotController : ControllerBase
     {
         try
         {
-            var coordinator = new ScanCoordinator();
+            var coordinator =
+                new ScanCoordinator();
 
             var result =
-                await coordinator.RunScanAsync(
-                    sendWhenEmpty: true,
-                    cancellationToken)
+                await coordinator
+                    .RunScanAsync(
+                        sendWhenEmpty: true,
+                        cancellationToken)
                     .ConfigureAwait(false);
 
-            return Ok(new
+            if (result.BaselineInitialized)
             {
-                Success = true,
-                result.BaselineInitialized,
-                NewMovies = result.NewMovies.Count,
-                NewSeries = result.NewSeries.Count,
-                TotalNew = result.TotalNew,
-                Message = result.BaselineInitialized
-                    ? "Scan-baseline aangemaakt. Nieuwe toevoegingen worden vanaf nu gemeld."
-                    : $"Scan voltooid. {result.TotalNew} nieuwe item(s) gevonden."
-            });
+                return Ok(
+                    new
+                    {
+                        Message =
+                            "Scan baseline created successfully."
+                    });
+            }
+
+            return Ok(
+                new
+                {
+                    Message =
+                        $"Scan completed successfully. " +
+                        $"{result.TotalNew} new item(s) found.",
+
+                    TotalNew =
+                        result.TotalNew
+                });
         }
-        catch (ArgumentException ex)
+        catch (InvalidOperationException exception)
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = ex.Message
-            });
+            return BadRequest(
+                new
+                {
+                    Message =
+                        exception.Message
+                });
         }
-        catch (InvalidOperationException ex)
+        catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = ex.Message
-            });
+            return BadRequest(
+                new
+                {
+                    Message =
+                        exception.Message
+                });
         }
-        catch (HttpRequestException ex)
+        catch (Exception exception)
         {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = $"HTTP fout tijdens scan: {ex.Message}"
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new
-            {
-                Success = false,
-                Message = $"Onverwachte fout tijdens scan: {ex.Message}"
-            });
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        $"Manual scan failed: {exception.Message}"
+                });
         }
     }
+
 
     [HttpPost("ResetBaseline")]
     public ActionResult ResetBaseline()
     {
         try
         {
-            var coordinator = new ScanCoordinator();
+            var coordinator =
+                new ScanCoordinator();
+
             coordinator.ResetBaseline();
 
-            return Ok(new
-            {
-                Success = true,
-                Message = "Scan-baseline verwijderd. De volgende scan maakt een nieuwe baseline aan."
-            });
+            return Ok(
+                new
+                {
+                    Message =
+                        "Scan baseline reset successfully. " +
+                        "The next scan will create a new baseline."
+                });
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return StatusCode(500, new
-            {
-                Success = false,
-                Message = $"Baseline kon niet worden verwijderd: {ex.Message}"
-            });
+            return StatusCode(
+                500,
+                new
+                {
+                    Message =
+                        $"Failed to reset scan baseline: {exception.Message}"
+                });
         }
     }
 }

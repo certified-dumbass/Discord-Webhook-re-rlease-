@@ -15,28 +15,10 @@ public class PluginConfiguration : BasePluginConfiguration
     // Scan schedule
     // ============================================================
 
-    // Scan interval in hours.
-    // 1 = every hour
-    // 2 = every 2 hours
-    // 4 = every 4 hours
-    // 6 = every 6 hours
-    // 12 = every 12 hours
-    // 24 = every day
-    // 168 = every week
     public int ScanIntervalHours { get; set; } = 168;
 
-    // Day used for weekly scans.
-    // 0 = Sunday
-    // 1 = Monday
-    // 2 = Tuesday
-    // 3 = Wednesday
-    // 4 = Thursday
-    // 5 = Friday
-    // 6 = Saturday
     public int ScanDay { get; set; } = 0;
 
-    // Time at which the scan should run.
-    // Format: HH:mm
     public string ScanTime { get; set; } = "20:00";
 
 
@@ -44,34 +26,92 @@ public class PluginConfiguration : BasePluginConfiguration
     // Content scanning
     // ============================================================
 
-    // Movies
     public bool ScanMovies { get; set; } = true;
 
-
-    // Series
     public bool ScanSeries { get; set; } = true;
 
-    // Scan seasons belonging to series
     public bool ScanSeriesSeasons { get; set; } = true;
 
-    // Scan episodes belonging to series
     public bool ScanSeriesEpisodes { get; set; } = true;
 
-
-    // Anime
     public bool ScanAnime { get; set; } = true;
 
-    // Scan seasons belonging to anime series
     public bool ScanAnimeSeasons { get; set; } = true;
 
-    // Scan episodes belonging to anime series
     public bool ScanAnimeEpisodes { get; set; } = true;
 
-
-    // Anime movies
     public bool ScanAnimeMovies { get; set; } = true;
 
-
-    // Collections
     public bool ScanCollections { get; set; } = true;
+
+
+    // ============================================================
+    // Library mapping
+    // ============================================================
+
+    // One or more Jellyfin library IDs that should be treated as Movies.
+    public string[] MovieLibraryIds { get; set; } =
+        Array.Empty<string>();
+
+    // One or more Jellyfin library IDs that should be treated as Series.
+    public string[] SeriesLibraryIds { get; set; } =
+        Array.Empty<string>();
+
+    // One or more Jellyfin library IDs that should be treated as Anime.
+    public string[] AnimeLibraryIds { get; set; } =
+        Array.Empty<string>();
+
+    // One or more Jellyfin library IDs that should be treated as Anime Movies.
+    public string[] AnimeMovieLibraryIds { get; set; } =
+        Array.Empty<string>();
+
+    // One or more Jellyfin library IDs that should be treated as Collections.
+    public string[] CollectionLibraryIds { get; set; } =
+        Array.Empty<string>();
+
+
+    // ============================================================
+    // Discord message style
+    // ============================================================
+
+    public string MessageStyle { get; set; } = "Default";
+
+    public string MessageTemplate { get; set; } =
+        "Hey everyone! 👋\n\n" +
+        "Here is your {schedule} update on what got added.\n\n" +
+        "{movies}\n" +
+        "{series}\n" +
+        "{anime}\n" +
+        "{anime_movies}\n" +
+        "{collections}\n\n" +
+        "That is {count} new additions. Enjoy watching! 💜";
+
+    public string EmptyScanTemplate { get; set; } =
+        "🔍 Scan complete — nothing new this time.";
+
+    public bool HideEmptyCategories { get; set; } = true;
+
+    public bool ShowYears { get; set; } = true;
+
+    public bool ShowTotalCount { get; set; } = true;
+
+    public bool ShowScanFrequency { get; set; } = true;
+
+
+    // ============================================================
+    // Discord category ordering
+    // ============================================================
+
+    public string CategoryOrderMode { get; set; } = "Manual";
+
+    public string[] ManualCategoryOrder { get; set; } =
+    [
+        "Anime",
+        "Movies",
+        "Series",
+        "AnimeMovies",
+        "Collections"
+    ];
+
+    public int PopularityWindowDays { get; set; } = 7;
 }

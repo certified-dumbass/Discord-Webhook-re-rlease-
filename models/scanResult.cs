@@ -6,9 +6,50 @@ public class ScanResult
 
     public bool BaselineInitialized { get; set; }
 
+
+    // ============================================================
+    // Movies
+    // ============================================================
+
     public List<Movie> NewMovies { get; set; } = new();
+
+
+    // ============================================================
+    // Series
+    // ============================================================
 
     public List<Series> NewSeries { get; set; } = new();
 
-    public int TotalNew => NewMovies.Count + NewSeries.Count;
+
+    // ============================================================
+    // Anime
+    // ============================================================
+
+    public List<Series> NewAnime { get; set; } = new();
+
+
+    // ============================================================
+    // Anime movies
+    // ============================================================
+
+    public List<Movie> NewAnimeMovies { get; set; } = new();
+
+
+    // ============================================================
+    // Collections
+    // ============================================================
+
+    public List<CollectionItem> NewCollections { get; set; } = new();
+
+
+    // ============================================================
+    // Totals
+    // ============================================================
+
+    public int TotalNew =>
+        NewMovies.Count +
+        NewSeries.Count +
+        NewAnime.Count +
+        NewAnimeMovies.Count +
+        NewCollections.Count;
 }
