@@ -10,10 +10,10 @@
     "versions": [
       {
         "version": "1.2.3",
-        "changelog": "Rebuilt Dreamstreaming Discord Bot with scan coordination, manual scanning and scheduled scanning.",
+        "changelog": "Fixed Jellyfin 10.11.x library scanning and set the plugin assembly version to 1.2.3.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/certified-dumbass/Discord-Webhook-re-rlease-/releases/download/v1.2.3/Dreamstreaming.DiscordBot_1.2.3.zip",
-        "checksum": "1A27AE295CB9B454E595A7A17B7F95F6",
+        "checksum": "AFD32007BED8671BCA7D9BE5BD219AAB",
         "timestamp": "2026-09-03T00:00:00Z"
       }
     ]
