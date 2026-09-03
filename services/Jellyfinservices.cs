@@ -215,16 +215,6 @@ public sealed class JellyfinService : IDisposable
 
         var movies =
             new List<Movie>();
-
-
-        /*
-         * /Items/Latest returns a JSON array directly,
-         * unlike /Items which returns:
-         *
-         * {
-         *     "Items": [...]
-         * }
-         */
         if (document.RootElement.ValueKind !=
             JsonValueKind.Array)
         {
@@ -374,6 +364,125 @@ public sealed class JellyfinService : IDisposable
 
 
     // ============================================================
+    // Seasons
+    // ============================================================
+
+    public async Task<List<SeasonScanItem>> GetSeasons(
+        string parentId,
+        string libraryName,
+        CancellationToken cancellationToken = default)
+    {
+        string url =
+            BuildLatestItemsUrl(
+                "Season",
+                parentId,
+                "DateCreated,ProductionYear,SeriesId,SeriesName,IndexNumber");
+
+        using var response =
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+
+        string json =
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+        var seasons =
+            new List<SeasonScanItem>();
+
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return seasons;
+        }
+
+        foreach (JsonElement item in document.RootElement.EnumerateArray())
+        {
+            seasons.Add(
+                new SeasonScanItem
+                {
+                    Id = GetString(item, "Id"),
+                    SeriesId = GetString(item, "SeriesId"),
+                    SeriesName = GetString(item, "SeriesName"),
+                    Name = GetString(item, "Name"),
+                    SeasonNumber = TryGetInt(item, "IndexNumber"),
+                    DateAdded = TryGetDateAdded(item)
+                });
+        }
+
+        return seasons;
+    }
+
+
+    // ============================================================
+    // Episodes
+    // ============================================================
+
+    public async Task<List<EpisodeScanItem>> GetEpisodes(
+        string parentId,
+        string libraryName,
+        CancellationToken cancellationToken = default)
+    {
+        string url =
+            BuildLatestItemsUrl(
+                "Episode",
+                parentId,
+                "DateCreated,ProductionYear,SeriesId,SeriesName,SeasonId,SeasonName,ParentIndexNumber,IndexNumber");
+
+        using var response =
+            await _client
+                .GetAsync(
+                    url,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+
+        string json =
+            await response.Content
+                .ReadAsStringAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+        using JsonDocument document =
+            JsonDocument.Parse(json);
+
+        var episodes =
+            new List<EpisodeScanItem>();
+
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return episodes;
+        }
+
+        foreach (JsonElement item in document.RootElement.EnumerateArray())
+        {
+            episodes.Add(
+                new EpisodeScanItem
+                {
+                    Id = GetString(item, "Id"),
+                    SeriesId = GetString(item, "SeriesId"),
+                    SeriesName = GetString(item, "SeriesName"),
+                    SeasonId = GetString(item, "SeasonId"),
+                    SeasonName = GetString(item, "SeasonName"),
+                    SeasonNumber = TryGetInt(item, "ParentIndexNumber"),
+                    EpisodeNumber = TryGetInt(item, "IndexNumber"),
+                    Name = GetString(item, "Name"),
+                    DateAdded = TryGetDateAdded(item)
+                });
+        }
+
+        return episodes;
+    }
+
+
+    // ============================================================
     // Collections
     // ============================================================
 
@@ -390,14 +499,6 @@ public sealed class JellyfinService : IDisposable
         string? parentId,
         CancellationToken cancellationToken = default)
     {
-        /*
-         * Collections behave slightly differently from normal
-         * Movies / Series libraries.
-         *
-         * Keep using the normal recursive Items endpoint here.
-         * BoxSets are not always represented consistently through
-         * /Items/Latest on every Jellyfin setup.
-         */
 
         string url =
             BuildItemsUrl(
@@ -476,13 +577,14 @@ public sealed class JellyfinService : IDisposable
 
     private string BuildLatestItemsUrl(
         string itemType,
-        string? parentId)
+        string? parentId,
+        string fields = "DateCreated,ProductionYear")
     {
         string url =
             $"{_jellyfinUrl}/Items/Latest" +
             $"?IncludeItemTypes={Uri.EscapeDataString(itemType)}" +
             $"&Limit={LatestItemLimit}" +
-            $"&Fields=DateCreated,ProductionYear";
+            $"&Fields={Uri.EscapeDataString(fields)}";
 
 
         if (!string.IsNullOrWhiteSpace(parentId))
@@ -578,14 +680,6 @@ public sealed class JellyfinService : IDisposable
     private static DateTime TryGetDateAdded(
         JsonElement element)
     {
-        /*
-         * DateCreated is the Jellyfin field currently used by
-         * the plugin as the item's library-added timestamp.
-         *
-         * Items/Latest already limits the candidates to Jellyfin's
-         * recently-added content, which makes this considerably more
-         * reliable than querying the complete library every scan.
-         */
 
         if (!element.TryGetProperty(
                 "DateCreated",

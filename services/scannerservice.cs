@@ -32,7 +32,6 @@ public sealed class ScannerService
         DateTime scanStartedUtc = DateTime.UtcNow;
         DateTime? lastScanUtc = LoadLastScanUtc();
 
-        // First run establishes a baseline.
         if (lastScanUtc is null)
         {
             SaveLastScanUtc(scanStartedUtc);
@@ -49,117 +48,256 @@ public sealed class ScannerService
             ScanDate = scanStartedUtc
         };
 
-        var libraries =
+        List<JellyfinLibrary> jellyfinLibraries =
             await _jellyfinService
                 .GetLibraries(cancellationToken)
                 .ConfigureAwait(false);
 
         var librariesById =
-            libraries.ToDictionary(
+            jellyfinLibraries.ToDictionary(
                 x => x.Id,
                 x => x,
                 StringComparer.OrdinalIgnoreCase);
 
+        DiscordLibraryConfiguration[] enabledLibraries =
+            (_configuration.Libraries ?? Array.Empty<DiscordLibraryConfiguration>())
+                .Where(x => x.Enabled && !string.IsNullOrWhiteSpace(x.LibraryId))
+                .ToArray();
 
-        // ============================================================
-        // Movies
-        // ============================================================
-
-        if (_configuration.ScanMovies)
+        if (enabledLibraries.Length > 0)
         {
-            await ScanMovieCategory(
-                _configuration.MovieLibraryIds,
-                librariesById,
-                result.NewMovies,
-                isAnime: false,
-                lastScanUtc.Value,
-                scanStartedUtc,
-                cancellationToken)
+            await ScanDynamicLibraries(
+                    enabledLibraries,
+                    librariesById,
+                    result,
+                    lastScanUtc.Value,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        else
+        {
+            await ScanLegacy(
+                    librariesById,
+                    result,
+                    lastScanUtc.Value,
+                    scanStartedUtc,
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
 
-
-        // ============================================================
-        // Series
-        // ============================================================
-
-        if (_configuration.ScanSeries)
-        {
-            await ScanSeriesCategory(
-                _configuration.SeriesLibraryIds,
-                librariesById,
-                result.NewSeries,
-                isAnime: false,
-                lastScanUtc.Value,
-                scanStartedUtc,
-                cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-
-        // ============================================================
-        // Anime
-        // ============================================================
-
-        if (_configuration.ScanAnime)
-        {
-            await ScanSeriesCategory(
-                _configuration.AnimeLibraryIds,
-                librariesById,
-                result.NewAnime,
-                isAnime: true,
-                lastScanUtc.Value,
-                scanStartedUtc,
-                cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-
-        // ============================================================
-        // Anime Movies
-        // ============================================================
-
-        if (_configuration.ScanAnimeMovies)
-        {
-            await ScanMovieCategory(
-                _configuration.AnimeMovieLibraryIds,
-                librariesById,
-                result.NewAnimeMovies,
-                isAnime: true,
-                lastScanUtc.Value,
-                scanStartedUtc,
-                cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-
-        // ============================================================
-        // Collections
-        // ============================================================
-
-        if (_configuration.ScanCollections)
-        {
-            await ScanCollectionsCategory(
-                _configuration.CollectionLibraryIds,
-                result.NewCollections,
-                lastScanUtc.Value,
-                scanStartedUtc,
-                cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-
-        // Save the scan START time rather than the finish time.
-        // This prevents missing media added while the scan is running.
         SaveLastScanUtc(scanStartedUtc);
 
         return result;
     }
 
+    private async Task ScanDynamicLibraries(
+        IEnumerable<DiscordLibraryConfiguration> configuredLibraries,
+        IReadOnlyDictionary<string, JellyfinLibrary> librariesById,
+        ScanResult result,
+        DateTime lastScanUtc,
+        DateTime scanStartedUtc,
+        CancellationToken cancellationToken)
+    {
+        foreach (DiscordLibraryConfiguration configuredLibrary in configuredLibraries)
+        {
+            if (!librariesById.TryGetValue(
+                    configuredLibrary.LibraryId,
+                    out JellyfinLibrary? jellyfinLibrary))
+            {
+                continue;
+            }
 
-    // ============================================================
-    // Movie category scanning
-    // ============================================================
+            string collectionType =
+                string.IsNullOrWhiteSpace(jellyfinLibrary.CollectionType)
+                    ? configuredLibrary.CollectionType
+                    : jellyfinLibrary.CollectionType;
+
+            var libraryResult = new LibraryScanResult
+            {
+                LibraryId = jellyfinLibrary.Id,
+                LibraryName = jellyfinLibrary.Name,
+                CollectionType = collectionType
+            };
+
+            if (collectionType.Equals(
+                    "movies",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                List<Movie> movies =
+                    await _jellyfinService
+                        .GetMovies(
+                            jellyfinLibrary.Id,
+                            jellyfinLibrary.Name,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+
+                AddNewMovies(
+                    movies,
+                    libraryResult.NewMovies,
+                    isAnime: false,
+                    lastScanUtc,
+                    scanStartedUtc);
+
+                RemoveDuplicateMovies(libraryResult.NewMovies);
+            }
+            else if (collectionType.Equals(
+                         "tvshows",
+                         StringComparison.OrdinalIgnoreCase))
+            {
+                List<Series> series =
+                    await _jellyfinService
+                        .GetSeries(
+                            jellyfinLibrary.Id,
+                            jellyfinLibrary.Name,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+
+                AddNewSeries(
+                    series,
+                    libraryResult.NewSeries,
+                    isAnime: false,
+                    lastScanUtc,
+                    scanStartedUtc);
+
+                RemoveDuplicateSeries(libraryResult.NewSeries);
+
+                if (configuredLibrary.ScanSeasons)
+                {
+                    List<SeasonScanItem> seasons =
+                        await _jellyfinService
+                            .GetSeasons(
+                                jellyfinLibrary.Id,
+                                jellyfinLibrary.Name,
+                                cancellationToken)
+                            .ConfigureAwait(false);
+
+                    AddNewSeasons(
+                        seasons,
+                        libraryResult.NewSeasons,
+                        lastScanUtc,
+                        scanStartedUtc);
+
+                    RemoveDuplicateSeasons(libraryResult.NewSeasons);
+                }
+
+                if (configuredLibrary.ScanEpisodes)
+                {
+                    List<EpisodeScanItem> episodes =
+                        await _jellyfinService
+                            .GetEpisodes(
+                                jellyfinLibrary.Id,
+                                jellyfinLibrary.Name,
+                                cancellationToken)
+                            .ConfigureAwait(false);
+
+                    AddNewEpisodes(
+                        episodes,
+                        libraryResult.NewEpisodes,
+                        lastScanUtc,
+                        scanStartedUtc);
+
+                    RemoveDuplicateEpisodes(libraryResult.NewEpisodes);
+                }
+            }
+            else if (collectionType.Equals(
+                         "boxsets",
+                         StringComparison.OrdinalIgnoreCase))
+            {
+                List<CollectionItem> collections =
+                    await _jellyfinService
+                        .GetCollections(
+                            jellyfinLibrary.Id,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+
+                AddNewCollections(
+                    collections,
+                    libraryResult.NewCollections,
+                    lastScanUtc,
+                    scanStartedUtc);
+
+                RemoveDuplicateCollections(libraryResult.NewCollections);
+            }
+            else
+            {
+                continue;
+            }
+
+            result.Libraries.Add(libraryResult);
+        }
+    }
+
+    private async Task ScanLegacy(
+        IReadOnlyDictionary<string, JellyfinLibrary> librariesById,
+        ScanResult result,
+        DateTime lastScanUtc,
+        DateTime scanStartedUtc,
+        CancellationToken cancellationToken)
+    {
+        if (_configuration.ScanMovies)
+        {
+            await ScanMovieCategory(
+                    _configuration.MovieLibraryIds,
+                    librariesById,
+                    result.NewMovies,
+                    isAnime: false,
+                    lastScanUtc,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (_configuration.ScanSeries)
+        {
+            await ScanSeriesCategory(
+                    _configuration.SeriesLibraryIds,
+                    librariesById,
+                    result.NewSeries,
+                    isAnime: false,
+                    lastScanUtc,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (_configuration.ScanAnime)
+        {
+            await ScanSeriesCategory(
+                    _configuration.AnimeLibraryIds,
+                    librariesById,
+                    result.NewAnime,
+                    isAnime: true,
+                    lastScanUtc,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (_configuration.ScanAnimeMovies)
+        {
+            await ScanMovieCategory(
+                    _configuration.AnimeMovieLibraryIds,
+                    librariesById,
+                    result.NewAnimeMovies,
+                    isAnime: true,
+                    lastScanUtc,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (_configuration.ScanCollections)
+        {
+            await ScanCollectionsCategory(
+                    _configuration.CollectionLibraryIds,
+                    result.NewCollections,
+                    lastScanUtc,
+                    scanStartedUtc,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
 
     private async Task ScanMovieCategory(
         string[]? libraryIds,
@@ -170,17 +308,8 @@ public sealed class ScannerService
         DateTime scanStartedUtc,
         CancellationToken cancellationToken)
     {
-        string[] ids =
-            NormalizeLibraryIds(libraryIds);
+        string[] ids = NormalizeLibraryIds(libraryIds);
 
-        /*
-         * Backward compatibility:
-         * no mapping = scan all movies server-wide.
-         *
-         * We only use this fallback for regular Movies.
-         * Anime Movies should never fall back to all movies,
-         * otherwise everything would be duplicated.
-         */
         if (ids.Length == 0)
         {
             if (isAnime)
@@ -188,7 +317,7 @@ public sealed class ScannerService
                 return;
             }
 
-            var movies =
+            List<Movie> movies =
                 await _jellyfinService
                     .GetMovies(cancellationToken)
                     .ConfigureAwait(false);
@@ -210,10 +339,9 @@ public sealed class ScannerService
                 out JellyfinLibrary? library);
 
             string libraryName =
-                library?.Name ??
-                string.Empty;
+                library?.Name ?? string.Empty;
 
-            var movies =
+            List<Movie> movies =
                 await _jellyfinService
                     .GetMovies(
                         libraryId,
@@ -232,11 +360,6 @@ public sealed class ScannerService
         RemoveDuplicateMovies(destination);
     }
 
-
-    // ============================================================
-    // Series category scanning
-    // ============================================================
-
     private async Task ScanSeriesCategory(
         string[]? libraryIds,
         IReadOnlyDictionary<string, JellyfinLibrary> librariesById,
@@ -246,16 +369,8 @@ public sealed class ScannerService
         DateTime scanStartedUtc,
         CancellationToken cancellationToken)
     {
-        string[] ids =
-            NormalizeLibraryIds(libraryIds);
+        string[] ids = NormalizeLibraryIds(libraryIds);
 
-        /*
-         * Backward compatibility:
-         * no mapping = scan all series server-wide.
-         *
-         * Anime does NOT use that fallback because that would duplicate
-         * every normal series into the Anime category.
-         */
         if (ids.Length == 0)
         {
             if (isAnime)
@@ -263,7 +378,7 @@ public sealed class ScannerService
                 return;
             }
 
-            var series =
+            List<Series> series =
                 await _jellyfinService
                     .GetSeries(cancellationToken)
                     .ConfigureAwait(false);
@@ -285,10 +400,9 @@ public sealed class ScannerService
                 out JellyfinLibrary? library);
 
             string libraryName =
-                library?.Name ??
-                string.Empty;
+                library?.Name ?? string.Empty;
 
-            var series =
+            List<Series> series =
                 await _jellyfinService
                     .GetSeries(
                         libraryId,
@@ -307,11 +421,6 @@ public sealed class ScannerService
         RemoveDuplicateSeries(destination);
     }
 
-
-    // ============================================================
-    // Collection scanning
-    // ============================================================
-
     private async Task ScanCollectionsCategory(
         string[]? libraryIds,
         List<CollectionItem> destination,
@@ -319,12 +428,11 @@ public sealed class ScannerService
         DateTime scanStartedUtc,
         CancellationToken cancellationToken)
     {
-        string[] ids =
-            NormalizeLibraryIds(libraryIds);
+        string[] ids = NormalizeLibraryIds(libraryIds);
 
         if (ids.Length == 0)
         {
-            var collections =
+            List<CollectionItem> collections =
                 await _jellyfinService
                     .GetCollections(cancellationToken)
                     .ConfigureAwait(false);
@@ -340,7 +448,7 @@ public sealed class ScannerService
 
         foreach (string libraryId in ids)
         {
-            var collections =
+            List<CollectionItem> collections =
                 await _jellyfinService
                     .GetCollections(
                         libraryId,
@@ -356,11 +464,6 @@ public sealed class ScannerService
 
         RemoveDuplicateCollections(destination);
     }
-
-
-    // ============================================================
-    // Add/filter helpers
-    // ============================================================
 
     private static void AddNewMovies(
         IEnumerable<Movie> movies,
@@ -379,14 +482,10 @@ public sealed class ScannerService
                 continue;
             }
 
-            movie.IsAnime =
-                isAnime;
-
-            destination.Add(
-                movie);
+            movie.IsAnime = isAnime;
+            destination.Add(movie);
         }
     }
-
 
     private static void AddNewSeries(
         IEnumerable<Series> series,
@@ -405,14 +504,46 @@ public sealed class ScannerService
                 continue;
             }
 
-            item.IsAnime =
-                isAnime;
-
-            destination.Add(
-                item);
+            item.IsAnime = isAnime;
+            destination.Add(item);
         }
     }
 
+    private static void AddNewSeasons(
+        IEnumerable<SeasonScanItem> seasons,
+        List<SeasonScanItem> destination,
+        DateTime lastScanUtc,
+        DateTime scanStartedUtc)
+    {
+        foreach (SeasonScanItem season in seasons)
+        {
+            if (IsNewItem(
+                    season.DateAdded,
+                    lastScanUtc,
+                    scanStartedUtc))
+            {
+                destination.Add(season);
+            }
+        }
+    }
+
+    private static void AddNewEpisodes(
+        IEnumerable<EpisodeScanItem> episodes,
+        List<EpisodeScanItem> destination,
+        DateTime lastScanUtc,
+        DateTime scanStartedUtc)
+    {
+        foreach (EpisodeScanItem episode in episodes)
+        {
+            if (IsNewItem(
+                    episode.DateAdded,
+                    lastScanUtc,
+                    scanStartedUtc))
+            {
+                destination.Add(episode);
+            }
+        }
+    }
 
     private static void AddNewCollections(
         IEnumerable<CollectionItem> collections,
@@ -422,78 +553,71 @@ public sealed class ScannerService
     {
         foreach (CollectionItem collection in collections)
         {
-            if (!IsNewItem(
+            if (IsNewItem(
                     collection.DateAdded,
                     lastScanUtc,
                     scanStartedUtc))
             {
-                continue;
+                destination.Add(collection);
             }
-
-            destination.Add(
-                collection);
         }
     }
-
-
-    // ============================================================
-    // Duplicate protection
-    // ============================================================
 
     private static void RemoveDuplicateMovies(
         List<Movie> movies)
     {
-        var unique =
-            movies
-                .GroupBy(
-                    x => x.Id,
-                    StringComparer.OrdinalIgnoreCase)
-                .Select(
-                    x => x.First())
-                .ToList();
-
-        movies.Clear();
-        movies.AddRange(unique);
+        ReplaceWithUniqueById(
+            movies,
+            x => x.Id);
     }
-
 
     private static void RemoveDuplicateSeries(
         List<Series> series)
     {
-        var unique =
-            series
-                .GroupBy(
-                    x => x.Id,
-                    StringComparer.OrdinalIgnoreCase)
-                .Select(
-                    x => x.First())
-                .ToList();
-
-        series.Clear();
-        series.AddRange(unique);
+        ReplaceWithUniqueById(
+            series,
+            x => x.Id);
     }
 
+    private static void RemoveDuplicateSeasons(
+        List<SeasonScanItem> seasons)
+    {
+        ReplaceWithUniqueById(
+            seasons,
+            x => x.Id);
+    }
+
+    private static void RemoveDuplicateEpisodes(
+        List<EpisodeScanItem> episodes)
+    {
+        ReplaceWithUniqueById(
+            episodes,
+            x => x.Id);
+    }
 
     private static void RemoveDuplicateCollections(
         List<CollectionItem> collections)
     {
-        var unique =
-            collections
-                .GroupBy(
-                    x => x.Id,
-                    StringComparer.OrdinalIgnoreCase)
-                .Select(
-                    x => x.First())
-                .ToList();
-
-        collections.Clear();
-        collections.AddRange(unique);
+        ReplaceWithUniqueById(
+            collections,
+            x => x.Id);
     }
 
+    private static void ReplaceWithUniqueById<T>(
+        List<T> items,
+        Func<T, string> idSelector)
+    {
+        List<T> unique =
+            items
+                .GroupBy(
+                    idSelector,
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(x => x.First())
+                .ToList();
 
-    // ============================================================
-    // General helpers
-    // ============================================================
+        items.Clear();
+        items.AddRange(unique);
+    }
 
     private static string[] NormalizeLibraryIds(
         string[]? libraryIds)
@@ -505,15 +629,11 @@ public sealed class ScannerService
         }
 
         return libraryIds
-            .Where(
-                x => !string.IsNullOrWhiteSpace(x))
-            .Select(
-                x => x.Trim())
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
-
 
     private static bool IsNewItem(
         DateTime dateAdded,
@@ -525,7 +645,6 @@ public sealed class ScannerService
             dateAdded <= scanStartedUtc;
     }
 
-
     public void ResetBaseline()
     {
         if (File.Exists(_lastScanFile))
@@ -533,7 +652,6 @@ public sealed class ScannerService
             File.Delete(_lastScanFile);
         }
     }
-
 
     private DateTime? LoadLastScanUtc()
     {
@@ -545,23 +663,20 @@ public sealed class ScannerService
         try
         {
             string json =
-                File.ReadAllText(
-                    _lastScanFile);
+                File.ReadAllText(_lastScanFile);
 
             using JsonDocument document =
-                JsonDocument.Parse(
-                    json);
+                JsonDocument.Parse(json);
 
             if (document.RootElement.TryGetProperty(
                     "LastScanUtc",
                     out JsonElement lastScanElement) &&
                 lastScanElement.TryGetDateTime(
-                    out var date))
+                    out DateTime date))
             {
                 return date.ToUniversalTime();
             }
 
-            // Backward compatibility.
             if (document.RootElement.TryGetProperty(
                     "LastScan",
                     out lastScanElement) &&
@@ -573,25 +688,20 @@ public sealed class ScannerService
         }
         catch
         {
-            // Invalid state file.
-            // The next scan establishes a clean baseline.
         }
 
         return null;
     }
 
-
     private void SaveLastScanUtc(
         DateTime value)
     {
         string? directory =
-            Path.GetDirectoryName(
-                _lastScanFile);
+            Path.GetDirectoryName(_lastScanFile);
 
         if (!string.IsNullOrWhiteSpace(directory))
         {
-            Directory.CreateDirectory(
-                directory);
+            Directory.CreateDirectory(directory);
         }
 
         var data =
