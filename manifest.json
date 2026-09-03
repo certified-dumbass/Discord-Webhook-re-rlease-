@@ -9,12 +9,12 @@
     "imageUrl": "https://raw.githubusercontent.com/certified-dumbass/Discord-Webhook-re-rlease-/main/thumbnail.png",
     "versions": [
       {
-        "version": "1.2.0",
+        "version": "1.2.1",
         "changelog": "Rebuilt Dreamstreaming Discord Bot with scan coordination, manual scanning and scheduled scanning.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/certified-dumbass/Discord-Webhook-re-rlease-/releases/download/v1.2.0/Dreamstreaming.DiscordBot_1.2.0.zip",
-        "checksum": "5C38D8D2C886EF5D1A69358FFEB6934E",
-        "timestamp": "2026-08-27T00:00:00Z"
+        "sourceUrl": "https://github.com/certified-dumbass/Discord-Webhook-re-rlease-/releases/download/v1.2.1/Dreamstreaming.DiscordBot_1.2.1.zip",
+        "checksum": "B519BB8B0D644086805A448AD808F33B",
+        "timestamp": "2026-09-03T00:00:00Z"
       }
     ]
   }
